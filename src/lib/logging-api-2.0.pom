@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.gtri.util</groupId>
+    <artifactId>logging-api</artifactId>
+    <version>2.0</version>
+
+    <name>GTRI Logging API</name>
+    <description>
+        Another API for logging, based off merging StringFormatter, SLF4j, ResourceBundles
+        and all major logging APIs before now (commons-logging, util logging, log4j).
+    </description>
+
+    <parent>
+        <groupId>org.gtri</groupId>
+        <artifactId>super-pom</artifactId>
+        <version>1.6</version>
+    </parent>
+
+    <scm>
+        <connection>scm:svn:https://iead.ittl.gtri.org/svn/all/util/logging/logging-api/tags/2.0</connection>
+        <developerConnection>scm:svn:https://iead.ittl.gtri.org/svn/all/util/logging/logging-api/tags/2.0</developerConnection>
+        <url>https://iead.ittl.gtri.org/svn/all/util/logging/logging-api/tags/2.0</url>
+    </scm>
+
+    <properties>
+        <application.build.date>${maven.build.timestamp}</application.build.date>
+        <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <!-- Change to 1.5 java compilation level -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin>
+
+        </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+
+</project>

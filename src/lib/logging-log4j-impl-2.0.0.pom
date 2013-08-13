@@ -1,0 +1,87 @@
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.gtri.util</groupId>
+    <artifactId>logging-log4j-impl</artifactId>
+    <version>2.0.0</version>
+
+    <packaging>jar</packaging>
+
+    <name>GTRI Logging Log4j Implementation</name>
+    <description>
+        An implementation of the logging api, built to use log4j.  As an extra
+        bonus, this project provides a PatternLayout extension that uses jAnsi,
+        so you can do 'coloring' in your log statements.
+    </description>
+
+    <parent>
+        <groupId>org.gtri</groupId>
+        <artifactId>super-pom</artifactId>
+        <version>1.6</version>
+    </parent>
+
+    <scm>
+        <connection>scm:svn:https://iead.ittl.gtri.org/svn/all/util/logging/logging-log4j-impl/tags/2.0.0</connection>
+        <developerConnection>scm:svn:https://iead.ittl.gtri.org/svn/all/util/logging/logging-log4j-impl/tags/2.0.0</developerConnection>
+        <url>https://iead.ittl.gtri.org/svn/all/util/logging/logging-log4j-impl/tags/2.0.0</url>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <application.build.date>${maven.build.timestamp}</application.build.date>
+        <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>logging-api</artifactId>
+            <version>2.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.16</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fusesource.jansi</groupId>
+            <artifactId>jansi</artifactId>
+            <version>1.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+
+    <build>
+        <plugins>
+
+            <!-- Change to 1.5 java compilation level -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin>
+
+        </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+    
+</project>

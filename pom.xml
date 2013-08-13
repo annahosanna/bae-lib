@@ -1,0 +1,235 @@
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.gtri.gfipm.bae</groupId>
+    <artifactId>gfipm-bae-parent</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Backend Attribute Exchange Parent Project</name>
+    <description>
+        A library which implements the backend attribute exchange specification, by abstracting
+        it with an API and having potentially multiple implementations.
+    </description>
+
+    <modules>
+        <module>bae-api</module>
+        <module>implementations</module>
+    </modules>
+
+    <properties>
+        <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
+    </properties>
+
+    <build>
+        <plugins>
+
+
+
+            <plugin>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>2.4</version>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>install-gtri-super-pom</id>
+                        <goals><goal>install-file</goal></goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <file>${basedir}/src/lib/super-pom-1.6.pom</file>
+                            <pomFile>${basedir}/src/lib/super-pom-1.6.pom</pomFile>
+                            <packaging>pom</packaging>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>install-gtri-logging-api</id>
+                        <goals><goal>install-file</goal></goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <file>${basedir}/src/lib/logging-api-2.0.jar</file>
+                            <pomFile>${basedir}/src/lib/logging-api-2.0.pom</pomFile>
+                            <packaging>jar</packaging>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>install-gtri-logging-log4j-impl</id>
+                        <goals><goal>install-file</goal></goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <file>${basedir}/src/lib/logging-log4j-impl-2.0.0.jar</file>
+                            <pomFile>${basedir}/src/lib/logging-log4j-impl-2.0.0.pom</pomFile>
+                            <packaging>jar</packaging>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>gmaven-plugin</artifactId>
+                <version>1.5</version>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>certs-dir-check</id>
+                        <phase>validate</phase>
+                        <goals><goal>execute</goal></goals>
+                        <configuration>
+                            <providerSelection>2.0</providerSelection>
+                            <source><![CDATA[
+                                def certsDir = new File("./certs")
+                                String certsArchivePath = project.properties['bae-certificates-archive'] ?: "";
+                                log.debug "Certs archive path resolved to: [${certsArchivePath}]"
+                                File certsArchive = new File(certsArchivePath)
+                                if( !certsDir.exists() && certsArchive.exists() ){
+                                    log.info "Extracting certificates from location '${certsArchive}'..."
+                                    def zipFile = new java.util.zip.ZipFile(certsArchive)
+                                    zipFile.entries().each { zipEntry ->
+                                        def curFile = new File(zipEntry.name)
+                                        if( zipEntry.isDirectory() ){
+                                            curFile.mkdirs()
+                                        }else{
+                                            curFile.parentFile.mkdirs();
+                                            log.info("Extracting ${zipEntry.name}...")
+                                            org.apache.commons.io.IOUtils.copy(zipFile.getInputStream(zipEntry), new FileOutputStream(curFile))
+                                        }
+                                    }
+                                }else if( certsDir.exists() ){
+                                    log.info "Certs directory already exists, skipping extraction..."
+                                }else{
+                                    log.warn "Certs directory & certs archive property '$certsArchivePath' are not found.  Certain integration tests will be skipped."
+                                }
+                            ]]></source>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.gmaven.runtime</groupId>
+                        <artifactId>gmaven-runtime-2.0</artifactId>
+                        <version>1.5</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-all</artifactId>
+                        <version>2.0.4</version>
+                        <type>jar</type>
+                    </dependency>
+                    <dependency>
+                        <groupId>commons-io</groupId>
+                        <artifactId>commons-io</artifactId>
+                        <version>2.4</version>
+                        <type>jar</type>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <!-- Enables Groovy Compilation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.5.1</version>
+                <configuration>
+                    <compilerId>groovy-eclipse-compiler</compilerId>
+                    <compilerArgument>nowarn</compilerArgument>
+                    <verbose>false</verbose>
+                    <debug>true</debug>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-eclipse-compiler</artifactId>
+                        <version>2.7.0-01</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-eclipse-batch</artifactId>
+                        <version>1.8.6-01</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <!-- Cleans additional files -->
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>certs</directory>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.gtri.util</groupId>
+            <artifactId>logging-api</artifactId>
+            <version>2.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>2.0.4</version>
+            <type>jar</type>
+        </dependency>
+
+        <dependency><!-- Targeting this because ShibIDP uses it -->
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk16</artifactId>
+            <version>1.46</version>
+            <scope>provided</scope>
+        </dependency>
+
+
+        <!-- ========================================= -->
+        <!-- Test DEPENDENCIES -->
+        <!-- ========================================= -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+            <version>1.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.gtri.util</groupId>
+            <artifactId>logging-log4j-impl</artifactId>
+            <version>2.0.0</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+
+    <distributionManagement>
+        <repository>
+            <uniqueVersion>false</uniqueVersion>
+            <id>GTRI</id>
+            <name>GTRI Internal Repository</name>
+            <url>https://iead.ittl.gtri.org/artifactory/internal</url>
+        </repository>
+        <snapshotRepository>
+            <uniqueVersion>true</uniqueVersion>
+            <id>GTRI</id>
+            <name>GTRI Internal Snapshots Repository</name>
+            <url>https://iead.ittl.gtri.org/artifactory/internal-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+</project>
