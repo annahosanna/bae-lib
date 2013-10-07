@@ -14,14 +14,16 @@
         it with an API and having potentially multiple implementations.
     </description>
 
+    <parent>
+        <groupId>org.gtri</groupId>
+        <artifactId>super-pom</artifactId>
+        <version>2.0.0</version>
+    </parent>
+
     <modules>
         <module>bae-api</module>
         <module>implementations</module>
     </modules>
-
-    <properties>
-        <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
-    </properties>
 
     <build>
         <plugins>
@@ -216,20 +218,11 @@
 
     </dependencies>
 
-
-    <distributionManagement>
+    <repositories>
         <repository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>GTRI</id>
-            <name>GTRI Internal Repository</name>
-            <url>https://iead.ittl.gtri.org/artifactory/internal</url>
+            <id>gtri-external</id>
+            <url>https://maven.gtri.gatech.edu/repos/external</url>
         </repository>
-        <snapshotRepository>
-            <uniqueVersion>true</uniqueVersion>
-            <id>GTRI</id>
-            <name>GTRI Internal Snapshots Repository</name>
-            <url>https://iead.ittl.gtri.org/artifactory/internal-snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
+    </repositories>
 
 </project>
