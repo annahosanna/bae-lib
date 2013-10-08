@@ -34,7 +34,7 @@ class WebServiceRequestOptionsImpl implements WebServiceRequestOptions {
             }catch(Throwable t){
                 throw new UnsupportedOperationException("Cannot parse value[${value}] of key[${key}] into a boolean.", t);
             }
-        throw new UnsupportedOperationException("Could not find value for key[$key]")
+        return null;
     }
 
     @Override
@@ -58,6 +58,7 @@ class WebServiceRequestOptionsImpl implements WebServiceRequestOptions {
             }catch(Throwable t){
                 throw new UnsupportedOperationException("Cannot parse value[${value}] of key[${key}] into a number.", t);
             }
+        return null;
     }
 
     @Override
