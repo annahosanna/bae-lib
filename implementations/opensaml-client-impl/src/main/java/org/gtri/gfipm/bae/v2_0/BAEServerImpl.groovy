@@ -124,7 +124,8 @@ class BAEServerImpl implements BAEServer {
         HttpClientBuilder clientBuilder = new HttpClientBuilder();
         if( shouldUseClientCertInTLS() ) {
             logger.debug("Setting https protocol socket factory with client & server keys...")
-            clientBuilder.setHttpsProtocolSocketFactory(new TLSProtocolSocketFactory(keyManager, new DirectX509TrustManager(serverInfo.certificates)));
+            TLSProtocolSocketFactory tlsSocketFactry = new TLSProtocolSocketFactory(keyManager, new DirectX509TrustManager(serverInfo.certificates, this.getWebServiceRequestOptions()))
+            clientBuilder.setHttpsProtocolSocketFactory(tlsSocketFactry);
         }else{
             logger.warn("*** Client side https certificate validation & Direct X509TrustManager have been disabled ***")
         }

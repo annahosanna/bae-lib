@@ -19,13 +19,17 @@ public interface WebServiceRequestOptions {
     public static final String STRICT_SERVER_WS_SECURITY_CHECKS = "STRICT_SERVER_WS_SECURITY_CHECKS";
     public static final Boolean STRICT_SERVER_WS_SECURITY_CHECKS_DEFAULT = Boolean.TRUE;
 
-
     /**
      * Whether or not to initiate the HttpClient connection with a client provided certificate for TLS Authentication.
      */
     public static final String CLIENT_CERT_AUTH = "CLIENT_CERT_AUTH";
     public static final Boolean CLIENT_CERT_AUTH_DEFAULT = Boolean.TRUE;
 
+    /**
+     * Whether or not to validate the server provided certificate for TLS Authentication.
+     */
+    public static final String SERVER_CERT_AUTH = "SERVER_CERT_AUTH";
+    public static final Boolean SERVER_CERT_AUTH_DEFAULT = Boolean.TRUE;
 
     /**
      * DUMP_RESPONSE_XML tells the system whether it should dump the response assertion XML to a file (unencrypted).
@@ -51,7 +55,6 @@ public interface WebServiceRequestOptions {
     public static final String WSS_CANONICALIZATION_ALGORITHM_DEFAULT = "http://www.w3.org/2001/10/xml-exc-c14n#"; // OMIT COMMENTS
 
 
-
     //==================================================================================================================
     //  This interface acts like a map, so here are the access methods...
     //==================================================================================================================
@@ -63,5 +66,10 @@ public interface WebServiceRequestOptions {
 
     public String getString(String key);
     public String getString(String key, String defaultValue);
+
+    /**
+     * Causes the web service request options to print their state to the console for debugging.
+     */
+    public void debugPrint();
 
 }//end WebServiceRequestOptions

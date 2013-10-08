@@ -43,7 +43,6 @@ public class ITBAEServerUsageCodeForIIR extends AbstractTest {
 
 
     @Test
-    @Ignore
     public void testQueryExample1() throws BAEServerCreationException, BAEServerException, InvalidFASCNException {
 
         File privateKeyFile = getCertFile(CLIENT_PRIVATE_KEY_FILE_NAME)
@@ -66,6 +65,7 @@ public class ITBAEServerUsageCodeForIIR extends AbstractTest {
         assertThat(clientInfo, notNullValue())
         def options = [:]
         options.put(WebServiceRequestOptions.CLIENT_CERT_AUTH, "false")
+        options.put(WebServiceRequestOptions.SERVER_CERT_AUTH, "false")
         WebServiceRequestOptions wsRequestOptions = WebServiceRequestOptionsFactory.getInstance().createWebServiceRequestOptions(options);
 
         // BAEServer implementations are long lived and thread safe, so you should be able to cache it indefinitely.

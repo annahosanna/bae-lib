@@ -4,6 +4,8 @@ import gtri.logging.Logger
 import gtri.logging.LoggerFactory
 import org.apache.ws.security.WSSecurityException
 import org.apache.ws.security.components.crypto.CryptoType
+import org.gtri.gfipm.bae.v2_0.WebServiceRequestOptions
+import org.gtri.gfipm.bae.v2_0.WebServiceRequestOptionsImpl
 
 import java.security.cert.CertPath
 import java.security.cert.CertPathValidator
@@ -23,8 +25,16 @@ class XMLCryptoHelperServer extends AbstractXMLCryptoHelper {
     static Logger logger = LoggerFactory.get(XMLCryptoHelperServer)
 
     Collection<X509Certificate> serverCertificates
+    Boolean shouldValidateServerCert;
     public XMLCryptoHelperServer(Collection<X509Certificate> serverCertificates){
         this.serverCertificates = serverCertificates
+        this.shouldValidateServerCert = WebServiceRequestOptions.SERVER_CERT_AUTH_DEFAULT
+    }
+    public XMLCryptoHelperServer(Collection<X509Certificate> serverCertificates, WebServiceRequestOptions opts){
+        this.serverCertificates = serverCertificates
+        this.shouldValidateServerCert = opts.getBoolean(WebServiceRequestOptions.SERVER_CERT_AUTH, WebServiceRequestOptions.SERVER_CERT_AUTH_DEFAULT);
+        opts.debugPrint();
+        logger.info("Value of shouldValidateServerCert: @|yellow ${shouldValidateServerCert}|@")
     }
 
 
@@ -61,6 +71,10 @@ class XMLCryptoHelperServer extends AbstractXMLCryptoHelper {
             logger.info("Verifying trust of certificates:")
             certs?.each{ cert ->
                 logger.info("    Cert: @|cyan ${cert.subjectDN}|@")
+            }
+            if( !this.shouldValidateServerCert ){
+                logger.warn("Skipping authentication on server certificates!")
+                return true;
             }
             // Generate cert path
             List<X509Certificate> certList = certs as List;

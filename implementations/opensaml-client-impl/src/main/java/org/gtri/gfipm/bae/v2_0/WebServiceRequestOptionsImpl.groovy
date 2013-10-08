@@ -1,5 +1,8 @@
 package org.gtri.gfipm.bae.v2_0
 
+import gtri.logging.Logger
+import gtri.logging.LoggerFactory
+
 /**
  * Simple implementation of the {@link WebServiceRequestOptions} interface.
  * <br/><br/>
@@ -8,7 +11,7 @@ package org.gtri.gfipm.bae.v2_0
  */
 class WebServiceRequestOptionsImpl implements WebServiceRequestOptions {
 
-
+    static Logger logger = LoggerFactory.get(WebServiceRequestOptionsImpl.class)
 
     // Underlying storage
     Properties properties
@@ -31,14 +34,16 @@ class WebServiceRequestOptionsImpl implements WebServiceRequestOptions {
             }catch(Throwable t){
                 throw new UnsupportedOperationException("Cannot parse value[${value}] of key[${key}] into a boolean.", t);
             }
+        throw new UnsupportedOperationException("Could not find value for key[$key]")
     }
 
     @Override
     Boolean getBoolean(String key, Boolean defaultValue) {
         try{
             Boolean value = this.getBoolean(key)
-            return value ?: defaultValue
+            return value != null ? value : defaultValue
         }catch(Throwable t){
+            logger.debug("Error getting field '@|red $key|@' from web service request options: "+t);
             return defaultValue;
         }
     }
@@ -59,8 +64,9 @@ class WebServiceRequestOptionsImpl implements WebServiceRequestOptions {
     Number getNumber(String key, Number defaultValue) {
         try{
             Number num = this.getNumber(key)
-            return num ?: defaultValue
+            return num ? num : defaultValue
         }catch(Throwable t){
+            logger.error("Error getting field '@|red $key|@' from web service request options: "+t);
             return defaultValue;
         }
     }
@@ -75,4 +81,14 @@ class WebServiceRequestOptionsImpl implements WebServiceRequestOptions {
         String property = getString(key);
         property ? property : defaultValue
     }
+
+    @Override
+    void debugPrint() {
+        logger.info("WebServiceRequestOptions: ")
+        this.properties?.keySet()?.each{ key ->
+            logger.info("    [@|cyan $key|@] = [@|green ${this.properties.getProperty(key)}|@]")
+        }
+    }//end
+
+
 }

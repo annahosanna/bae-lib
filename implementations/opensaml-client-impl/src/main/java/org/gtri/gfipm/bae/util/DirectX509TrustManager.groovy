@@ -2,6 +2,7 @@ package org.gtri.gfipm.bae.util
 
 import gtri.logging.Logger
 import gtri.logging.LoggerFactory
+import org.gtri.gfipm.bae.v2_0.WebServiceRequestOptions
 
 import javax.net.ssl.X509TrustManager
 import java.security.cert.CertificateException
@@ -22,6 +23,10 @@ class DirectX509TrustManager implements X509TrustManager {
     public DirectX509TrustManager(Collection<X509Certificate> serverCertificates){
         this.serverCertificates = serverCertificates;
         this.serverCrypto = new XMLCryptoHelperServer(serverCertificates)
+    }
+    public DirectX509TrustManager(Collection<X509Certificate> serverCertificates, WebServiceRequestOptions opts){
+        this.serverCertificates = serverCertificates;
+        this.serverCrypto = new XMLCryptoHelperServer(serverCertificates, opts)
     }
 
     @Override
