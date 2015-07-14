@@ -1,0 +1,8 @@
+Firstly, use the password based version.
+
+Next, follow this URL: http://serverfault.com/questions/413832/generate-key-and-crt-from-pkcs12-file
+
+Which has these 2 commands in it:
+
+openssl pkcs12 -in filename.pfx -nocerts -out filename.key
+openssl pkcs12 -in filename.pfx -clcerts -nokeys -out filename.crt 

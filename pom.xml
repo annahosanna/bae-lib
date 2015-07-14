@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.gtri.gfipm.bae</groupId>
-    <artifactId>gfipm-bae-parent</artifactId>
+    <artifactId>bae-parent</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -21,14 +21,51 @@
     </parent>
 
     <modules>
-        <module>bae-api</module>
-        <module>implementations</module>
+        <module>client-api</module>
+        <module>client-implementations</module>
     </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.gtri.util</groupId>
+            <artifactId>logging-api</artifactId>
+            <version>2.0</version>
+        </dependency>
+
+        <dependency><!-- Targeting this because ShibIDP uses it -->
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk16</artifactId>
+            <version>1.46</version>
+            <scope>provided</scope>
+        </dependency>
+
+
+        <!-- ========================================= -->
+        <!-- Test DEPENDENCIES -->
+        <!-- ========================================= -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+            <version>1.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.gtri.util</groupId>
+            <artifactId>logging-log4j-impl</artifactId>
+            <version>2.0.0</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
 
     <build>
         <plugins>
-
-
 
             <plugin>
                 <artifactId>maven-install-plugin</artifactId>
@@ -69,90 +106,29 @@
             </plugin>
 
             <plugin>
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>gmaven-plugin</artifactId>
-                <version>1.5</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
                 <inherited>false</inherited>
                 <executions>
                     <execution>
-                        <id>certs-dir-check</id>
+                        <id>extract-certificates</id>
+                        <goals><goal>run</goal></goals>
                         <phase>validate</phase>
-                        <goals><goal>execute</goal></goals>
                         <configuration>
-                            <providerSelection>2.0</providerSelection>
-                            <source><![CDATA[
-                                def certsDir = new File("./certs")
-                                String certsArchivePath = project.properties['bae-certificates-archive'] ?: "";
-                                log.debug "Certs archive path resolved to: [${certsArchivePath}]"
-                                File certsArchive = new File(certsArchivePath)
-                                if( !certsDir.exists() && certsArchive.exists() ){
-                                    log.info "Extracting certificates from location '${certsArchive}'..."
-                                    def zipFile = new java.util.zip.ZipFile(certsArchive)
-                                    zipFile.entries().each { zipEntry ->
-                                        def curFile = new File(zipEntry.name)
-                                        if( zipEntry.isDirectory() ){
-                                            curFile.mkdirs()
-                                        }else{
-                                            curFile.parentFile.mkdirs();
-                                            log.info("Extracting ${zipEntry.name}...")
-                                            org.apache.commons.io.IOUtils.copy(zipFile.getInputStream(zipEntry), new FileOutputStream(curFile))
-                                        }
-                                    }
-                                }else if( certsDir.exists() ){
-                                    log.info "Certs directory already exists, skipping extraction..."
-                                }else{
-                                    log.warn "Certs directory & certs archive property '$certsArchivePath' are not found.  Certain integration tests will be skipped."
-                                }
-                            ]]></source>
+                            <target>
+                                <property name="certs_zip_outdir" value="./certs" />
+
+                                <echo>Removing existing 'certs' directory...</echo>
+                                <delete dir="${certs_zip_outdir}" />
+
+                                <property name="theZip" value="${bae-certificates-archive}" />
+                                <echo>Extracting certs archive ${theZip} to ${certs_zip_outdir}...</echo>
+                                <unzip src="${theZip}" dest="${certs_zip_outdir}" failOnEmptyArchive="false" />
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.gmaven.runtime</groupId>
-                        <artifactId>gmaven-runtime-2.0</artifactId>
-                        <version>1.5</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.codehaus.groovy</groupId>
-                        <artifactId>groovy-all</artifactId>
-                        <version>2.0.4</version>
-                        <type>jar</type>
-                    </dependency>
-                    <dependency>
-                        <groupId>commons-io</groupId>
-                        <artifactId>commons-io</artifactId>
-                        <version>2.4</version>
-                        <type>jar</type>
-                    </dependency>
-                </dependencies>
-            </plugin>
-
-            <!-- Enables Groovy Compilation -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.5.1</version>
-                <configuration>
-                    <compilerId>groovy-eclipse-compiler</compilerId>
-                    <compilerArgument>nowarn</compilerArgument>
-                    <verbose>false</verbose>
-                    <debug>true</debug>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.groovy</groupId>
-                        <artifactId>groovy-eclipse-compiler</artifactId>
-                        <version>2.7.0-01</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.codehaus.groovy</groupId>
-                        <artifactId>groovy-eclipse-batch</artifactId>
-                        <version>1.8.6-01</version>
-                    </dependency>
-                </dependencies>
             </plugin>
 
             <!-- Cleans additional files -->
@@ -172,51 +148,6 @@
         </plugins>
     </build>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.gtri.util</groupId>
-            <artifactId>logging-api</artifactId>
-            <version>2.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-            <version>2.0.4</version>
-            <type>jar</type>
-        </dependency>
-
-        <dependency><!-- Targeting this because ShibIDP uses it -->
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk16</artifactId>
-            <version>1.46</version>
-            <scope>provided</scope>
-        </dependency>
-
-
-        <!-- ========================================= -->
-        <!-- Test DEPENDENCIES -->
-        <!-- ========================================= -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <version>1.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.gtri.util</groupId>
-            <artifactId>logging-log4j-impl</artifactId>
-            <version>2.0.0</version>
-            <scope>test</scope>
-        </dependency>
-
-    </dependencies>
 
     <repositories>
         <repository>
