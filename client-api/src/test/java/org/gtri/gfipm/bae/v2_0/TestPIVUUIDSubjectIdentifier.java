@@ -9,15 +9,14 @@ import static org.hamcrest.Matchers.*;
 
 public class TestPIVUUIDSubjectIdentifier extends AbstractTest {
 
-    static String CERT_FILE_NAME = "piv16.crt";
+    static String CERT_FILE_NAME = "./src/test/resources/certs/piv16.crt";
 
     @Test
     public void testHasPIVUUIDFromCertificate() throws Exception {
         logger.info("Testing that an X509 certificate which contains a PIVI UUID can be parsed...");
 
         logger.debug("Reading cert...");
-        File certFile = getCertFile(CERT_FILE_NAME);
-        X509CertificateObject cert = readCert(certFile);
+        X509CertificateObject cert = readCert(CERT_FILE_NAME);
         assertThat(cert, notNullValue());
 
         logger.debug("Subject DN: "+cert.getSubjectDN().toString());
