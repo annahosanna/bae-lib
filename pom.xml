@@ -116,6 +116,7 @@
                         <goals><goal>run</goal></goals>
                         <phase>validate</phase>
                         <configuration>
+                            <failOnError>false</failOnError>
                             <target>
                                 <property name="certs_zip_outdir" value="./certs" />
 
