@@ -32,8 +32,8 @@ class XMLCryptoHelperServer extends AbstractXMLCryptoHelper {
     }
     public XMLCryptoHelperServer(Collection<X509Certificate> serverCertificates, WebServiceRequestOptions opts){
         this.serverCertificates = serverCertificates
-        this.shouldValidateServerCert = opts.getBoolean(WebServiceRequestOptions.SERVER_CERT_AUTH, WebServiceRequestOptions.SERVER_CERT_AUTH_DEFAULT);
-        opts.debugPrint();
+        this.shouldValidateServerCert = opts?.getBoolean(WebServiceRequestOptions.SERVER_CERT_AUTH, WebServiceRequestOptions.SERVER_CERT_AUTH_DEFAULT) ?: WebServiceRequestOptions.SERVER_CERT_AUTH_DEFAULT;
+        opts?.debugPrint();
         logger.info("Value of shouldValidateServerCert: @|yellow ${shouldValidateServerCert}|@")
     }
 
@@ -65,6 +65,25 @@ class XMLCryptoHelperServer extends AbstractXMLCryptoHelper {
      */
     public static final String NAME_CONSTRAINTS_OID = "2.5.29.30";
 
+    boolean isDirectlyTrusted(List<X509Certificate> certList){
+        Map<X509Certificate, Boolean> certsFound = [:]
+        certList.each{ givenCert ->
+            certsFound.put(givenCert, Boolean.FALSE)
+            serverCertificates.each{ serverCert ->
+                if( givenCert.equals(serverCert) )
+                    certsFound.put(givenCert, Boolean.TRUE)
+            }
+        }
+        boolean allFound = true;
+        for( X509Certificate cert : certList ){
+            if( certsFound.get(cert) == Boolean.FALSE ) {
+                allFound = false;
+                break;
+            }
+        }
+        return allFound;
+    }
+
     @Override
     boolean verifyTrust(X509Certificate[] certs, boolean enableRevocation) throws WSSecurityException {
         try{
@@ -76,17 +95,22 @@ class XMLCryptoHelperServer extends AbstractXMLCryptoHelper {
                 logger.warn("Skipping authentication on server certificates!")
                 return true;
             }
-            // Generate cert path
-            List<X509Certificate> certList = certs as List;
-            CertPath path = getCertificateFactory().generateCertPath(certList);
-
             logger.debug("Setting trust anchors: ")
             Set<TrustAnchor> set = new HashSet<TrustAnchor>();
-            serverCertificates.each{ cert ->
+            serverCertificates.each{ X509Certificate cert ->
                 logger.debug("   Trust Anchor: @|green ${cert.subjectDN}|@")
                 TrustAnchor anchor = new TrustAnchor(cert, cert.getExtensionValue(NAME_CONSTRAINTS_OID));
                 set.add(anchor);
             }
+
+            // Generate cert path
+            List<X509Certificate> certList = certs as List;
+            if( isDirectlyTrusted(certList) ){
+                logger.info("We have directly found each certificate, returning @|green TRUSTED|@...")
+                return true;
+            }
+
+            CertPath path = getCertificateFactory().generateCertPath(certList);
 
             PKIXParameters param = new PKIXParameters(set);
             param.setRevocationEnabled(enableRevocation);
@@ -105,6 +129,8 @@ class XMLCryptoHelperServer extends AbstractXMLCryptoHelper {
             }
             logger.debug("Validating with CertPathValidator(@|blue ${validator?.getClass().getName()}|@)...")
             validator.validate(path, param);
+
+            logger.info("Certificates are @|green TRUSTED|@!")
             return true;
         } catch (java.security.NoSuchProviderException e) {
             throw new WSSecurityException(

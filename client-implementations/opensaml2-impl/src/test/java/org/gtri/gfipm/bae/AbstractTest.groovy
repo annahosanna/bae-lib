@@ -5,7 +5,8 @@ import gtri.logging.LoggerFactory
 import org.gtri.gfipm.bae.util.SAMLUtils
 import org.junit.After
 import org.junit.Before
-import static org.junit.Assume.*
+import static org.hamcrest.Matchers.*
+import static org.hamcrest.MatcherAssert.*
 
 import javax.xml.datatype.DatatypeFactory
 import javax.xml.datatype.XMLGregorianCalendar
@@ -41,14 +42,14 @@ abstract class AbstractTest {
     protected String getBaseDir() {
         File file = new File(".")
         logger.debug("Start looking for basedir at: ${file.canonicalPath}")
-        while( file != null && !dirContainsChildren(file, "bae-api", "implementations", "pom.xml") ) {
+        while( file != null && !dirContainsChildren(file, "client-api", "client-implementations", "pom.xml") ) {
             file = new File(file.canonicalPath).getParentFile()
 //            logger.debug(" Recursing up to potential basedir at: ${file?.canonicalPath}")
         }
         if( file == null ) {
             def children = new File(".").listFiles()
             children.each{ child ->
-                if( file == null && dirContainsChildren(child, "bae-api", "implementations", "pom.xml") )
+                if( file == null && dirContainsChildren(child, "client-api", "client-implementations", "pom.xml") )
                     file = child
             }
         }
@@ -63,7 +64,7 @@ abstract class AbstractTest {
         String certFilePath = getCertsDir() + File.separator + name
         logger.debug("Trying to load cert file path: $certFilePath")
         def certFile = new File(certFilePath)
-        assumeTrue(certFile.exists());
+        assertThat(certFile.exists(), is(Boolean.TRUE));
         return certFile
     }
 

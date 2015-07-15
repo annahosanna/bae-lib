@@ -135,7 +135,6 @@ class BAEServerImpl implements BAEServer {
 
         logger.debug("Creating SOAP Client...")
         WSS4jHttpSOAPClient soapClient = new WSS4jHttpSOAPClient(httpClient, parserPool, this.clientInfo.privateKey, this.clientInfo.certificate, serverInfo.certificates);
-        // TODO Send Information to SOAP Client for WSS4j to encrypt.
 
         // Send the message
         try {

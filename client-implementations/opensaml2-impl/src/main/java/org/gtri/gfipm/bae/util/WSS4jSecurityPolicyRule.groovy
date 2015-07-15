@@ -5,6 +5,7 @@ import gtri.logging.LoggerFactory
 import org.apache.ws.security.WSConstants
 import org.apache.ws.security.WSSecurityEngine
 import org.apache.ws.security.WSSecurityEngineResult
+import org.apache.ws.security.WSSecurityException
 import org.apache.ws.security.components.crypto.Crypto
 import org.opensaml.ws.message.MessageContext
 import org.opensaml.ws.security.SecurityPolicyException
@@ -25,7 +26,7 @@ class WSS4jSecurityPolicyRule implements SecurityPolicyRule {
     //==================================================================================================================
     //  Static Variables
     //==================================================================================================================
-    static Logger logger = LoggerFactory.get(WSS4jSecurityPolicy)
+    static Logger logger = LoggerFactory.get(WSS4jSecurityPolicyRule)
     //==================================================================================================================
     //  Constructors
     //==================================================================================================================
@@ -73,10 +74,20 @@ class WSS4jSecurityPolicyRule implements SecurityPolicyRule {
         WSSecurityEngine secEngine = new WSSecurityEngine();
         Crypto crypto = new XMLCryptoHelperServer(this.getServerCertificates());
         Element securityHeader = getSecurityHeader(soapResponse)
-        List<WSSecurityEngineResult> results = secEngine.processSecurityHeader(securityHeader, null, crypto, crypto);
+        List<WSSecurityEngineResult> results = []
+        try {
+            results = secEngine.processSecurityHeader(securityHeader, null, crypto, crypto);
+        }catch( WSSecurityException wsse ){
+            logger.error("Error processing WS Security!", wsse);
+            throw wsse;
+        }
         if( results == null || results.isEmpty() ){
             logger.warn "No WSSecurity results!"
         }else{
+            logger.info("Processing the following security results(@|cyan ${results?.size() ?: 0}|@):")
+            results?.each{ WSSecurityEngineResult result ->
+                logger.info("    Result[${result.getClass().getName()}]: ${result.toString()}")
+            }
             results.each{ WSSecurityEngineResult result ->
                 Integer action = result.get(WSSecurityEngineResult.TAG_ACTION)
                 String actionName = "[UNKNOWN: $action]"
@@ -99,6 +110,7 @@ class WSS4jSecurityPolicyRule implements SecurityPolicyRule {
             }
         }
 
+        logger.debug("Finished evaluating WSS4j WS-Security!")
     }//end evaluate()
 
 

@@ -44,6 +44,7 @@ public class WSS4jSecurityPolicy implements SecurityPolicy {
     void evaluate(MessageContext messageContext) throws SecurityPolicyException {
         logger.debug("Evaluating @|cyan ${this.rules?.size()}|@ rules...")
         this.rules?.each{ rule ->
+            logger.info("Calling Rule[${rule.getClass().getName()}]...")
             rule.evaluate(messageContext)
         }
     }//end evaluate()
