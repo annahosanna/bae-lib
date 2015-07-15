@@ -22,18 +22,18 @@ import static org.hamcrest.Matchers.notNullValue;
  */
 public class ITFindGFIPMAttributesForStarfleetQA extends AbstractTest {
 
-    static String SERVER_ENDPOINT = "https://aplgig-xml.jhuapl.edu/ICAM/BAE/ExternalBAEService/v2.0/QA";
-    static String DESTINATION_ID = "urn:test:idmanagement.gov:icam:bae:v2:starfleet";
+    static String SERVER_ENDPOINT = "https://icam-gw.jhuapl.edu/BAE";
+    static String DESTINATION_ID = "urn:dhs.gov:icam:bae:v1.0:test";
 
-    static String SERVER_HTTPS_PUBLIC_CERTIFICATE_FILE_NAME = "cert_starfleet.der";
-    static String SERVER_WS_SECURITY_PUBLIC_CERTIFICATE_FILE_NAME = "SSL_Entrust_ChainRoot_CA.der";
+    static String SERVER_HTTPS_PUBLIC_CERTIFICATE_FILE_NAME = "xmlgw-dev.crt";
+    static String SERVER_WS_SECURITY_PUBLIC_CERTIFICATE_FILE_NAME = "STARFLEET.crt";
 
-    static String CLIENT_PRIVATE_KEY_FILE_NAME = "GTRI_PILOT.p8.pem"
-    static String CLIENT_PRIVATE_KEY_PASSWORD = "jhuapl"
+    static String CLIENT_PRIVATE_KEY_FILE_NAME = "gtri-piv-2015.key"
+    static String CLIENT_PRIVATE_KEY_PASSWORD = ""
 
-    static String CLIENT_CERTIFICATE_FILE_NAME = "cert_GTRI_PILOT.pem"
+    static String CLIENT_CERTIFICATE_FILE_NAME = "gtri-piv-2015.crt"
 
-    static String ISSUER_ID = "urn:test:idmanagement.gov:icam:bae:v2:GTRI_PILOT";
+    static String ISSUER_ID = "URN:TEST:ICAM:BAE:V2:GTRI";
 
 //    static String PIVI_UUID = "urn:uuid:048051b4-2288-41fd-b895-5fe9945e1c63";
     static String PIVI_UUID = "048051b4-2288-41fd-b895-5fe9945e1c63";

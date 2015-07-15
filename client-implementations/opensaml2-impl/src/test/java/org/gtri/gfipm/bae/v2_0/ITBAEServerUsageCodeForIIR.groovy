@@ -43,6 +43,7 @@ public class ITBAEServerUsageCodeForIIR extends AbstractTest {
 
 
     @Test
+    @Ignore
     public void testQueryExample1() throws BAEServerCreationException, BAEServerException, InvalidFASCNException {
 
         File privateKeyFile = getCertFile(CLIENT_PRIVATE_KEY_FILE_NAME)
