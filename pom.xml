@@ -73,16 +73,6 @@
                 <inherited>false</inherited>
                 <executions>
                     <execution>
-                        <id>install-gtri-super-pom</id>
-                        <goals><goal>install-file</goal></goals>
-                        <phase>validate</phase>
-                        <configuration>
-                            <file>${basedir}/src/lib/super-pom-1.6.pom</file>
-                            <pomFile>${basedir}/src/lib/super-pom-1.6.pom</pomFile>
-                            <packaging>pom</packaging>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>install-gtri-logging-api</id>
                         <goals><goal>install-file</goal></goals>
                         <phase>validate</phase>
