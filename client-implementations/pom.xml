@@ -19,6 +19,7 @@
 
     <modules>
         <module>opensaml2-impl</module>
+        <module>opensaml3-impl</module>
     </modules>
 
     <build>
