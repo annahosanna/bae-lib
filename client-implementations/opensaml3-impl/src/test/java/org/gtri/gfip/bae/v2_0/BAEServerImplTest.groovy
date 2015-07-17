@@ -2,6 +2,7 @@ package org.gtri.gfip.bae.v2_0
 
 import gtri.logging.Logger
 import gtri.logging.LoggerFactory
+import org.gtri.gfip.bae.AbstractTest
 import org.gtri.gfipm.bae.v2_0.BAEServerImpl
 import org.gtri.gfipm.bae.v2_0.PIVUUIDSubjectIdentifier
 import org.junit.Test

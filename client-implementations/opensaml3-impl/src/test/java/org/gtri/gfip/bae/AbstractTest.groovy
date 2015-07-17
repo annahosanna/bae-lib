@@ -1,4 +1,4 @@
-package org.gtri.gfip.bae.v2_0
+package org.gtri.gfip.bae
 
 import gtri.logging.Logger
 import gtri.logging.LoggerFactory
