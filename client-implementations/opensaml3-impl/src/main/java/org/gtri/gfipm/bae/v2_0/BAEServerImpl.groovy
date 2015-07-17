@@ -3,6 +3,7 @@ package org.gtri.gfipm.bae.v2_0
 import gtri.logging.Logger
 import gtri.logging.LoggerFactory
 import org.gtri.gfipm.bae.util.AttributeQueryBuilder
+import org.gtri.gfipm.bae.util.AttributeQuerySigner
 import org.joda.time.DateTime
 import org.opensaml.core.config.ConfigurationService
 import org.opensaml.core.xml.XMLObjectBuilder
@@ -13,6 +14,7 @@ import org.opensaml.saml.saml2.core.AttributeQuery
 import org.opensaml.saml.saml2.core.Issuer
 import org.opensaml.saml.saml2.core.NameID
 import org.opensaml.saml.saml2.core.Subject
+import org.opensaml.xmlsec.signature.Signature
 
 import javax.xml.namespace.QName
 
@@ -36,12 +38,13 @@ class BAEServerImpl implements BAEServer {
         logger.info("Request to do attributeQuery on @|cyan ${subjectId}|@...")
         validateConfiguration();
 
+        logger.debug("Building AttributeQuery Object...");
         AttributeQuery attributeQuery = AttributeQueryBuilder.build(subjectId, UUID.randomUUID().toString(), this.getDestination(), this.getIssuerIdentifier());
-        logger.info("Successfully built AttributeQuery[id=@|green ${attributeQuery.getID()}|@] for @|cyan ${subjectId}|@");
 
-        // Time to implement the enveloped signature,
-        //    @see http://svn.shibboleth.net/view/java-opensaml/trunk/opensaml-xmlsec-impl/src/test/java/org/opensaml/xmlsec/signature/support/EnvelopedSignatureTest.java?view=markup
+        logger.debug("Sending AttributeQuery to be signed...");
+        Signature attributeQuerySignature = AttributeQuerySigner.sign(attributeQuery, clientInfo);
 
+        logger.debug("Building empty SOAP envelope for attribute query...");
 
         throw new UnsupportedOperationException("NOT YET IMPLEMENTED");
     }//end attributeQuery()
