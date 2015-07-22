@@ -46,6 +46,8 @@ class WSS4jHelper {
         WSSecSignature signatureBuilder = new WSSecSignature();
         signatureBuilder.setKeyIdentifierType(WSConstants.ISSUER_SERIAL);
 
+        // @see http://ws.apache.org/wss4j/using.html
+
 
 
     }//end addWSSecurity(Element)
