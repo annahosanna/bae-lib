@@ -54,6 +54,11 @@ public interface WebServiceRequestOptions {
     public static final String WSS_CANONICALIZATION_ALGORITHM = "WSS_CANONICALIZATION_ALGORITHM";
     public static final String WSS_CANONICALIZATION_ALGORITHM_DEFAULT = "http://www.w3.org/2001/10/xml-exc-c14n#"; // OMIT COMMENTS
 
+    /**
+     * How long the http client should wait to establish a TCP connection.
+     */
+    public static final String HTTP_CLIENT_TIMEOUT = "HTTP_CLIENT_TIMEOUT";
+    public static final Integer HTTP_CLIENT_TIMEOUT_DEFAULT = 5; // Five seconds.
 
     //==================================================================================================================
     //  This interface acts like a map, so here are the access methods...

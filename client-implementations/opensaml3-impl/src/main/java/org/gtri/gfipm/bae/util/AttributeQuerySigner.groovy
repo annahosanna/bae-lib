@@ -59,9 +59,9 @@ class AttributeQuerySigner {
         if( credential == null )
             throw new UnsupportedOperationException("Credential is required to have a non-null value in order to compute a signature")
 
-        logger.debug("Request to digitally sign AttributeQuery[id=@|cyan ${query.getID()}|@]");
+        logger.debug("[${query.getID()}] Request to digitally sign AttributeQuery[id=@|cyan ${query.getID()}|@]");
 
-        logger.debug("Building Signature Object...");
+        logger.debug("[${query.getID()}] Building Signature Object...");
         XMLObjectProviderRegistry xmlObjectProviderRegistry = ConfigurationService.get(XMLObjectProviderRegistry.class);
         XMLObjectBuilderFactory xmlObjectBuilderFactory = xmlObjectProviderRegistry?.getBuilderFactory();
         if( xmlObjectBuilderFactory == null )
@@ -80,14 +80,14 @@ class AttributeQuerySigner {
 
         query.setSignature(signature);
 
-        logger.debug("Performing marshalling...");
+        logger.debug("[${query.getID()}] Performing marshalling for signature...");
         Marshaller marshaller = xmlObjectProviderRegistry.getMarshallerFactory().getMarshaller(query);
         Element signedElement = marshaller.marshall(query);
 
-        logger.debug("Signing...");
+        logger.debug("[${query.getID()}] Signing...");
         Signer.signObject(signature);
 
-        logger.info("Successfully signed ${AttributeQuery.class.getSimpleName()}[id=@|cyan ${query.getID()}|@]: \n"+SerializeSupport.prettyPrintXML(signedElement));
+        logger.info("[${query.getID()}] Successfully signed ${AttributeQuery.class.getSimpleName()}[id=@|cyan ${query.getID()}|@]: \n"+SerializeSupport.prettyPrintXML(signedElement));
         return signature;
     }//end sign()
 

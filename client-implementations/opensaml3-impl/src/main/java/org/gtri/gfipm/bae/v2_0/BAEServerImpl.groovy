@@ -2,21 +2,26 @@ package org.gtri.gfipm.bae.v2_0
 
 import gtri.logging.Logger
 import gtri.logging.LoggerFactory
+import org.apache.http.client.HttpClient
+import org.apache.http.conn.HttpClientConnectionManager
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.ssl.SSLContexts
 import org.gtri.gfipm.bae.util.AttributeQueryBuilder
 import org.gtri.gfipm.bae.util.AttributeQuerySigner
-import org.joda.time.DateTime
-import org.opensaml.core.config.ConfigurationService
-import org.opensaml.core.xml.XMLObjectBuilder
-import org.opensaml.core.xml.XMLObjectBuilderFactory
-import org.opensaml.core.xml.config.XMLObjectProviderRegistry
-import org.opensaml.saml.common.SAMLVersion
+import org.gtri.gfipm.bae.util.SoapEnvelopeBuilder
+import org.gtri.gfipm.bae.util.WSS4jHttpSOAPClient
+import org.opensaml.messaging.context.InOutOperationContext
+import org.opensaml.messaging.context.MessageContext
 import org.opensaml.saml.saml2.core.AttributeQuery
-import org.opensaml.saml.saml2.core.Issuer
-import org.opensaml.saml.saml2.core.NameID
-import org.opensaml.saml.saml2.core.Subject
+import org.opensaml.soap.client.SOAPClient
+import org.opensaml.soap.messaging.context.SOAP11Context
+import org.opensaml.soap.soap11.Envelope
 import org.opensaml.xmlsec.signature.Signature
 
-import javax.xml.namespace.QName
+import javax.net.ssl.SSLContext
+import java.util.concurrent.TimeUnit
 
 class BAEServerImpl implements BAEServer {
     //==================================================================================================================
@@ -29,22 +34,39 @@ class BAEServerImpl implements BAEServer {
     BAEClientInfo clientInfo
     BAEServerInfo serverInfo
     WebServiceRequestOptions webServiceRequestOptions
-
     //==================================================================================================================
     //  Public Interface Implementation Methods
     //==================================================================================================================
     @Override
     Collection<BackendAttribute> attributeQuery(SubjectIdentifier subjectId) throws BAEServerException {
-        logger.info("Request to do attributeQuery on @|cyan ${subjectId}|@...")
+        String txId = UUID.randomUUID().toString().toUpperCase();
+
+        logger.info("[${txId}] Request to do attributeQuery on @|cyan ${subjectId}|@...")
         validateConfiguration();
 
-        logger.debug("Building AttributeQuery Object...");
-        AttributeQuery attributeQuery = AttributeQueryBuilder.build(subjectId, UUID.randomUUID().toString(), this.getDestination(), this.getIssuerIdentifier());
+        logger.debug("[${txId}] Building AttributeQuery Object...");
+        AttributeQuery attributeQuery = AttributeQueryBuilder.build(subjectId, txId, this.getDestination(), this.getIssuerIdentifier());
 
-        logger.debug("Sending AttributeQuery to be signed...");
+        logger.debug("[${txId}] Sending AttributeQuery to be signed...");
         Signature attributeQuerySignature = AttributeQuerySigner.sign(attributeQuery, clientInfo);
 
-        logger.debug("Building empty SOAP envelope for attribute query...");
+        logger.debug("[${txId}] Building SOAP message contexts...");
+        MessageContext messageContext = new MessageContext();
+        messageContext.setMessage(attributeQuery);
+        Envelope envelope = SoapEnvelopeBuilder.buildSoap11Envelope(messageContext);
+        MessageContext inboundSoapContext = new MessageContext();
+        inboundSoapContext.addSubcontext(SOAP11Context.class, true);
+        InOutOperationContext inOutOperationContext = new InOutOperationContext(inboundSoapContext, messageContext);
+
+        // TODO When submitting MANY requests per second, we should strive to use a pool of HTTP Clients, instead of building new ones.
+        HttpClient httpClient = getHttpClient(txId);
+
+        logger.debug("[${txId}] Sending Attribute Query to EndpointAddress[@|cyan ${this.serverInfo?.getEndpointAddress()}|@]...");
+        SOAPClient soapClient = new WSS4jHttpSOAPClient(httpClient, this.clientInfo.getPrivateKey(), this.clientInfo.getCertificate());
+        soapClient.send(this.serverInfo?.endpointAddress, inOutOperationContext);
+
+        logger.debug("Validating the response...");
+        // TODO analyze the response
 
         throw new UnsupportedOperationException("NOT YET IMPLEMENTED");
     }//end attributeQuery()
@@ -85,6 +107,27 @@ class BAEServerImpl implements BAEServer {
     private String getIssuerIdentifier() {
         // TODO FIXME Need to pull this from the client info
         return "URN:TEST:ICAM:BAE:V2:GTRI";
+    }
+
+    private CloseableHttpClient getHttpClient(String txId) {
+        logger.debug("[$txId] Building an HTTP Client...");
+        HttpClientBuilder httpClientBuilder = HttpClientBuilder.create()
+        httpClientBuilder.setConnectionTimeToLive(this.webServiceRequestOptions.getNumber(WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT, WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT_DEFAULT), TimeUnit.SECONDS)
+
+        // TODO Figure out how to configure a custom SSL session to validate only against the server info given.
+
+        if( shouldUseClientCertInTLS() ){
+            // TODO We should present the client certificate to initiate a TLS connection.
+
+
+        }
+
+        SSLContext sslContext = SSLContexts.createSystemDefault();
+        httpClientBuilder.setSSLContext(sslContext)
+//        httpClientBuilder.setSSLHostnameVerifier(HostnameVerifier hostnameVerifier)
+
+
+        return httpClientBuilder.build();
     }
 
 }/* end BAEServerImpl */

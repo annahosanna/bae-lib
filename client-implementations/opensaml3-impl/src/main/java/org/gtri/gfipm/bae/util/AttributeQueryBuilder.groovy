@@ -46,7 +46,7 @@ class AttributeQueryBuilder {
         if( attributeQueryBuilder == null )
             throw new NullPointerException("Unable to obtain instance of ${XMLObjectBuilder.class.simpleName}<${AttributeQuery.class.simpleName}> from OpenSAML ${XMLObjectBuilderFactory.class.name}")
 
-        logger.debug("Building @|cyan ${AttributeQuery.class.simpleName}|@ object...");
+        logger.debug("[${transactionId}] Building @|cyan ${AttributeQuery.class.simpleName}|@ object...");
         AttributeQuery attributeQuery = attributeQueryBuilder.buildObject(AttributeQuery.DEFAULT_ELEMENT_NAME);
         attributeQuery.setDestination(destination);
         attributeQuery.setID(transactionId);
@@ -80,7 +80,7 @@ class AttributeQueryBuilder {
 
         attributeQuery.setSubject(subject);
 
-        logger.info("Successfully built AttributeQuery[id=@|cyan ${attributeQuery?.getID()}|@] around subject @|green ${subjectId}|@")
+        logger.info("[${transactionId}] Successfully built AttributeQuery[id=@|cyan ${attributeQuery?.getID()}|@] around subject @|green ${subjectId}|@")
         return attributeQuery;
     }//end build()
 

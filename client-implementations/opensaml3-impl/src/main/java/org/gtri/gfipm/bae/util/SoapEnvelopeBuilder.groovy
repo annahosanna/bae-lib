@@ -18,7 +18,7 @@ class SoapEnvelopeBuilder {
     static Logger logger = LoggerFactory.get(SoapEnvelopeBuilder.class)
 
     public static Envelope buildSoap11Envelope(MessageContext messageContext){
-        logger.debug("Wrapping XMLObject @|green ${messageContext.getMessage()}|@ in a SOAP Envelope...")
+        logger.debug("[${messageContext.getMessage()?.getID()}] Wrapping XMLObject @|green ${messageContext.getMessage()}|@ in a SOAP Envelope...")
 
         XMLObjectProviderRegistry xmlObjectProviderRegistry = ConfigurationService.get(XMLObjectProviderRegistry.class);
         XMLObjectBuilderFactory xmlObjectBuilderFactory = xmlObjectProviderRegistry?.getBuilderFactory();
