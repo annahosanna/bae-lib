@@ -1,6 +1,6 @@
-package org.gtri.gfip.bae.util
+package org.gtri.gfipm.bae.util
 
-import org.gtri.gfip.bae.AbstractTest
+import org.gtri.gfipm.bae.AbstractTest
 import org.gtri.gfipm.bae.util.AttributeQueryBuilder
 import org.gtri.gfipm.bae.util.AttributeQuerySigner
 import org.gtri.gfipm.bae.v2_0.EmailSubjectIdentifier

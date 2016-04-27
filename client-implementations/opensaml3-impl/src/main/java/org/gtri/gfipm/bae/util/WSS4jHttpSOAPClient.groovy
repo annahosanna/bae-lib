@@ -73,11 +73,14 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
     @Override
     protected HttpEntity createRequestEntity(@Nonnull Envelope message, @Nullable Charset charset) throws SOAPClientException {
         String txId = null;
-        XMLObject messageBody = message.getUnknownXMLObjects().get(0);
-        if( messageBody instanceof AttributeQuery ){
-            txId = ((AttributeQuery) messageBody).getID();
-        }else{
-            txId = "create-entity-${UUID.randomUUID().toString().replace("-", "")}";
+        // No idea what this is trying to accomplish, but it's doing a get(0) on an empty list, so protect against that. jk
+        if ( ! message.getUnknownXMLObjects().isEmpty () ) {
+          XMLObject messageBody = message.getUnknownXMLObjects().get(0);
+          if( messageBody instanceof AttributeQuery ){
+             txId = ((AttributeQuery) messageBody).getID();
+          }else{
+             txId = "create-entity-${UUID.randomUUID().toString().replace("-", "")}";
+          }
         }
 
         try {
@@ -89,8 +92,8 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
 
             logger.debug("[${txId}] Inserting WSS4J security headers...");
             Document xml = soapEnvelopeElement.getOwnerDocument();
-            WSSecHeader secHeader = new WSSecHeader();
-            secHeader.insertSecurityHeader(xml);
+            WSSecHeader secHeader = new WSSecHeader(xml);
+            secHeader.insertSecurityHeader();
 
             logger.debug("[${txId}] Inserting timestamp...")
             WSSecTimestamp timestamp = new WSSecTimestamp();
@@ -104,9 +107,11 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
 
             logger.debug("[${txId}] Building Crypto Implementation...")
             Crypto crypto = this.buildCrypto();
+            logger.debug("[${txId}] Resutling Crypto: " + crypto)
 
             logger.debug("[${txId}] Inserting signature...")
             WSSecSignature signature = new WSSecSignature();
+            signature.setUserInfo("myKey", "");
             signature.prepare(xml, crypto, secHeader);
             signature.getParts().add(timestampEncPart);
             signature.getParts().add(bodyPart);
@@ -137,12 +142,19 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
         if( this.clientCertificate == null )
             throw new NullPointerException("Cannot build required WSS4j Crypto, since 'ClientCertificate' is null.")
         Merlin merlin = new Merlin();
+        char[] pw = "".toCharArray();
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        KeyStore.ProtectionParameter protParam = new KeyStore.PasswordProtection("");
-        javax.crypto.SecretKey mySecretKey = this.clientPrivateKey;
-        KeyStore.SecretKeyEntry skEntry = new KeyStore.SecretKeyEntry(mySecretKey);
-        keyStore.setEntry("", skEntry, protParam);
-        keyStore.setCertificateEntry("", this.clientCertificate);
+        keyStore.load(null); // Creates an empty keystore
+        KeyStore.ProtectionParameter protParam = new KeyStore.PasswordProtection(pw);
+        //javax.crypto.SecretKey mySecretKey = this.clientPrivateKey;
+        //List<X509Certificate> clientCerts = [];
+        //clientCerts.add (this.clientCertificate);
+        //logger.debug ("Private Key: " + clientPrivateKey.toString());
+        //logger.debug ("Private Key: " + clientCertificate.toString());
+        KeyStore.PrivateKeyEntry pkEntry = new KeyStore.PrivateKeyEntry(clientPrivateKey, clientCertificate);
+        //logger.debug ("KeyStore: " + pkEntry);
+        keyStore.setEntry("myKey", pkEntry, protParam);
+        keyStore.setCertificateEntry("myCert", this.clientCertificate);
         merlin.setKeyStore(keyStore);
         return merlin;
     }//end buildCrypto()

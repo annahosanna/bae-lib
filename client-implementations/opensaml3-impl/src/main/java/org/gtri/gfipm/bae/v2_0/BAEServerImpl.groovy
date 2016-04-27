@@ -8,6 +8,9 @@ import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.ssl.SSLContexts
+import org.apache.http.ssl.SSLContextBuilder
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory
 import org.gtri.gfipm.bae.util.AttributeQueryBuilder
 import org.gtri.gfipm.bae.util.AttributeQuerySigner
 import org.gtri.gfipm.bae.util.SoapEnvelopeBuilder
@@ -19,6 +22,7 @@ import org.opensaml.soap.client.SOAPClient
 import org.opensaml.soap.messaging.context.SOAP11Context
 import org.opensaml.soap.soap11.Envelope
 import org.opensaml.xmlsec.signature.Signature
+import java.security.KeyStore
 
 import javax.net.ssl.SSLContext
 import java.util.concurrent.TimeUnit
@@ -55,7 +59,8 @@ class BAEServerImpl implements BAEServer {
         messageContext.setMessage(attributeQuery);
         Envelope envelope = SoapEnvelopeBuilder.buildSoap11Envelope(messageContext);
         MessageContext inboundSoapContext = new MessageContext();
-        inboundSoapContext.addSubcontext(SOAP11Context.class, true);
+        //What the hell is this line, adding a class definition to the context?  Seems like it should be something like new Soap11Context()...
+        //inboundSoapContext.addSubcontext(SOAP11Context.class, true);
         InOutOperationContext inOutOperationContext = new InOutOperationContext(inboundSoapContext, messageContext);
 
         // TODO When submitting MANY requests per second, we should strive to use a pool of HTTP Clients, instead of building new ones.
@@ -76,11 +81,12 @@ class BAEServerImpl implements BAEServer {
     //==================================================================================================================
     /**
      * This method is called to check the configuration before performing any work.  If the configuration is found to
-     * be invalid, a simple exception is raised with the details of what is invalid.
+SLContextBuilder
      */
     private void validateConfiguration() throws BAEServerException {
 
         // TODO Check serverInfo & clientInfo
+        // if ( clientInfo == 
 
     }//end validateConfiguration()
 
@@ -112,22 +118,87 @@ class BAEServerImpl implements BAEServer {
     private CloseableHttpClient getHttpClient(String txId) {
         logger.debug("[$txId] Building an HTTP Client...");
         HttpClientBuilder httpClientBuilder = HttpClientBuilder.create()
-        httpClientBuilder.setConnectionTimeToLive(this.webServiceRequestOptions.getNumber(WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT, WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT_DEFAULT), TimeUnit.SECONDS)
+        if ( webServiceRequestOptions )
+           httpClientBuilder.setConnectionTimeToLive(this.webServiceRequestOptions.getNumber(WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT, WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT_DEFAULT), TimeUnit.SECONDS)
+        else
+           httpClientBuilder.setConnectionTimeToLive(WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT_DEFAULT, TimeUnit.SECONDS)
 
         // TODO Figure out how to configure a custom SSL session to validate only against the server info given.
 
-        if( shouldUseClientCertInTLS() ){
-            // TODO We should present the client certificate to initiate a TLS connection.
 
+        //SSLContext sslContext = SSLContexts.createSystemDefault();
+        //Generate a custom SSL Context based on server certificate provided during initialization
+        KeyStore ks = buildKeyStore();
+        SSLContextBuilder scb = new SSLContextBuilder();
+        scb.create();
+        scb.loadTrustMaterial (ks, new TrustSelfSignedStrategy());
+        scb.loadKeyMaterial   (ks, "changeit".toCharArray());
+        SSLContext sslContext = scb.build();
+        SSLConnectionSocketFactory sslsf;
 
+        if( shouldUseClientCertInTLS() ) {
+           sslsf = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+        } else {
+           sslsf = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
         }
 
-        SSLContext sslContext = SSLContexts.createSystemDefault();
         httpClientBuilder.setSSLContext(sslContext)
-//        httpClientBuilder.setSSLHostnameVerifier(HostnameVerifier hostnameVerifier)
+        httpClientBuilder.setSSLSocketFactory(sslsf)
+     //   httpClientBuilder.setSSLHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
 
 
         return httpClientBuilder.build();
     }
+
+    private KeyStore buildKeyStore(){
+        if( clientInfo == null )
+            throw new NullPointerException("Cannot build tls key store with client info.") 
+        if( clientInfo.getCertificate() == null )
+            throw new BAEServerException ("No client certificate to authenticate to BAE Partner.") 
+        if( clientInfo.getPrivateKey() == null )
+            throw new BAEServerException ("No private key to authenticate to BAE Partner.") 
+        if( serverInfo == null )
+            throw new NullPointerException("Cannot build http trust store, since no server info.")
+        if( serverInfo.getCertificates().isEmpty() )
+            throw new BAEServerException ("No server certificate to validate BAE Server Partner.")
+
+        // Create empty keystore
+        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        ks.load(null); // Creates an empty keystore
+
+        // Add all certificates in the server trust chain
+        for ( cert in serverInfo.getCertificates() )
+           ks.setCertificateEntry(cert.toString(), cert);
+
+        // Add private key.
+        char[] nopw = "changeit".toCharArray();
+        KeyStore.ProtectionParameter protParam = new KeyStore.PasswordProtection(nopw);
+        KeyStore.PrivateKeyEntry pkEntry = new KeyStore.PrivateKeyEntry(clientInfo.getPrivateKey(), clientInfo.getCertificate());
+        ks.setEntry("myKey", pkEntry, protParam);
+        ks.setCertificateEntry("myCert", clientInfo.getCertificate());
+        logger.debug("HTTP Trust Store: " + ks);
+
+        return ks;
+    }//end buildKeyStore()
+
+
+    private KeyStore buildTrustStore(){
+        if( serverInfo == null )
+            throw new NullPointerException("Cannot build http trust store, since no server info.") 
+        if( serverInfo.getCertificates().isEmpty() )
+            throw new BAEServerException ("No server certificate to validate BAE Server Partner.") 
+        //char[] pw = "".toCharArray();
+        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        ks.load(null); // Creates an empty keystore
+
+        // Add all certificates in the server trust chain
+        for ( cert in serverInfo.getCertificates() )
+           ks.setCertificateEntry(cert.toString(), cert);
+
+        logger.debug("HTTP Trust Store: " + ks);
+
+        return ks;
+    }//end buildTrustStore()
+
 
 }/* end BAEServerImpl */

@@ -34,7 +34,7 @@
             <artifactId>wss4j-ws-security-dom</artifactId>
             <version>${wss4j.version}</version>
         </dependency>
-
+        
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
