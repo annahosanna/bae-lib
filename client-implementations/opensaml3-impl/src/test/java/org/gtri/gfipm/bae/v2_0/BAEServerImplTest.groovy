@@ -73,7 +73,7 @@ class BAEServerImplTest extends AbstractTest {
         SubjectIdentifier identifier = new PIVUUIDSubjectIdentifier(ID_VALUE);
 
         // This method could potentially take a while to return ( should be less than 10 seconds, though )
-       //  Collection<BackendAttribute> attributes = baeServer.attributeQuery(identifier);
+          Collection<BackendAttribute> attributes = baeServer.attributeQuery(identifier);
         
 
 //        BAEServerImpl baeServer = new BAEServerImpl();

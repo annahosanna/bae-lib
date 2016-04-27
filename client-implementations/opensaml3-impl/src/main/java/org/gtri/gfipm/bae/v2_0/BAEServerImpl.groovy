@@ -106,13 +106,11 @@ SLContextBuilder
     }
 
     private String getDestination() {
-        // TODO FIXME Need to pull this from the server info
-        return "urn:dhs.gov:icam:bae:v1.0:test";
+        return serverInfo.getDestination();
     }
 
     private String getIssuerIdentifier() {
-        // TODO FIXME Need to pull this from the client info
-        return "URN:TEST:ICAM:BAE:V2:GTRI";
+        return clientInfo.getIdentifier();
     }
 
     private CloseableHttpClient getHttpClient(String txId) {

@@ -24,12 +24,12 @@ import java.util.List;
  */
 public class ITBAEServerUsageCodeForIIR extends AbstractTest {
 
-    static String SERVER_ENDPOINT = "https://www.iir.com/28CFR-BAE/BAEService.svc";
+    static String SERVER_ENDPOINT = "https://extsvc.iir.com/28cfr-bae/BAEService.svc";
     static String DESTINATION_ID = "URN:TEST:IDMANAGEMENT.GOV:ICAM:BAE:V2:BJA28CFR";
 
 //    static String SERVER_PUBLIC_CERTIFICATE_FILE_NAME = "URN-TEST-IDMANAGEMENT.GOV-ICAM-BAE-V2-BJA28CFR.cer";
-    static String SERVER_PUBLIC_CERTIFICATE_FILE_NAME = "iir.com.der";
-    static String SERVER_PUBLIC_CERTIFICATE_FILE_NAME2 = "DigiCert_High_Assurance_CA-3.der";
+    static String SERVER_PUBLIC_CERTIFICATE_FILE_NAME  = "iir-2014.crt";
+    static String SERVER_PUBLIC_CERTIFICATE_FILE_NAME2 = "iir-2015.crt";
 
     static String CLIENT_PRIVATE_KEY_FILE_NAME = "gtri-pilot-iir.key";
     static String CLIENT_PRIVATE_KEY_PASSWORD = "";
@@ -43,7 +43,7 @@ public class ITBAEServerUsageCodeForIIR extends AbstractTest {
 
 
     @Test
-    @Ignore
+//    @Ignore
     public void testQueryExample1() throws BAEServerCreationException, BAEServerException, InvalidFASCNException {
 
         File privateKeyFile = getCertFile(CLIENT_PRIVATE_KEY_FILE_NAME)
