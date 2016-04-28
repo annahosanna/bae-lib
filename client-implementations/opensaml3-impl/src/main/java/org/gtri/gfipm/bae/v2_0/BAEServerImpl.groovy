@@ -4,6 +4,7 @@ import gtri.logging.Logger
 import gtri.logging.LoggerFactory
 import org.apache.http.client.HttpClient
 import org.apache.http.conn.HttpClientConnectionManager
+import org.apache.http.impl.conn.BasicHttpClientConnectionManager
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.HttpClients
@@ -11,6 +12,10 @@ import org.apache.http.ssl.SSLContexts
 import org.apache.http.ssl.SSLContextBuilder
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory
+import org.apache.http.conn.socket.ConnectionSocketFactory
+import org.apache.http.conn.socket.PlainConnectionSocketFactory
+import org.apache.http.config.Registry
+import org.apache.http.config.RegistryBuilder
 import org.gtri.gfipm.bae.util.AttributeQueryBuilder
 import org.gtri.gfipm.bae.util.AttributeQuerySigner
 import org.gtri.gfipm.bae.util.SoapEnvelopeBuilder
@@ -138,34 +143,54 @@ SLContextBuilder
         //SSLContext sslContext = SSLContexts.createSystemDefault();
         //Generate a custom SSL Context based on server certificate provided during initialization
         KeyStore ks = buildKeyStore();
+        KeyStore ts = buildTrustStore();
         SSLContextBuilder scb = new SSLContextBuilder();
         scb.create();
-        scb.loadTrustMaterial (ks, new TrustSelfSignedStrategy());
-        scb.loadKeyMaterial   (ks, "changeit".toCharArray());
-        SSLContext sslContext = scb.build();
-        SSLConnectionSocketFactory sslsf;
+        scb.loadTrustMaterial (ts, new TrustSelfSignedStrategy());
 
         if( shouldUseClientCertInTLS() ) {
-           sslsf = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+            logger.info ("Will attempt client certificate authentication.");
+            scb.loadKeyMaterial   (ks, "".toCharArray());
         } else {
-           sslsf = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+            logger.info ("Will not attempt client certificate authentication.");
         }
 
-        httpClientBuilder.setSSLContext(sslContext)
+        SSLContext sslContext = scb.build();
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+        //httpClientBuilder.setSSLContext(sslContext)  // Redundant with following line?
         httpClientBuilder.setSSLSocketFactory(sslsf)
-     //   httpClientBuilder.setSSLHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-
+        //httpClientBuilder.setSSLHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+        Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("https", sslsf)
+                .register("http", new PlainConnectionSocketFactory())
+                .build();
+        HttpClientConnectionManager ccm = new BasicHttpClientConnectionManager(registry);
+        httpClientBuilder.setConnectionManager(ccm);
 
         return httpClientBuilder.build();
     }
 
     private KeyStore buildKeyStore(){
         if( clientInfo == null )
-            throw new NullPointerException("Cannot build tls key store with client info.") 
+            throw new NullPointerException("Cannot build tls key store without client info.") 
         if( clientInfo.getCertificate() == null )
             throw new BAEServerException ("No client certificate to authenticate to BAE Partner.") 
         if( clientInfo.getPrivateKey() == null )
             throw new BAEServerException ("No private key to authenticate to BAE Partner.") 
+
+        // Create empty keystore
+        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        ks.load(null); // Creates an empty keystore
+
+        // Add private key.
+        char[] nopw = "".toCharArray();
+        logger.info ("Adding Private Key with Cert (" + clientInfo.getCertificate().getSubjectX500Principal().getName() + ") to keystore.");
+        ks.setKeyEntry("my client key", clientInfo.getPrivateKey(), nopw, clientInfo.getCertificate());
+
+        return ks;
+    }//end buildKeyStore()
+
+    private KeyStore buildTrustStore(){
         if( serverInfo == null )
             throw new NullPointerException("Cannot build http trust store, since no server info.")
         if( serverInfo.getCertificates().isEmpty() )
@@ -176,38 +201,12 @@ SLContextBuilder
         ks.load(null); // Creates an empty keystore
 
         // Add all certificates in the server trust chain
-        for ( cert in serverInfo.getCertificates() )
-           ks.setCertificateEntry(cert.toString(), cert);
-
-        // Add private key.
-        char[] nopw = "changeit".toCharArray();
-        KeyStore.ProtectionParameter protParam = new KeyStore.PasswordProtection(nopw);
-        KeyStore.PrivateKeyEntry pkEntry = new KeyStore.PrivateKeyEntry(clientInfo.getPrivateKey(), clientInfo.getCertificate());
-        ks.setEntry("myKey", pkEntry, protParam);
-        ks.setCertificateEntry("myCert", clientInfo.getCertificate());
-        logger.debug("HTTP Trust Store: " + ks);
-
-        return ks;
-    }//end buildKeyStore()
-
-
-    private KeyStore buildTrustStore(){
-        if( serverInfo == null )
-            throw new NullPointerException("Cannot build http trust store, since no server info.") 
-        if( serverInfo.getCertificates().isEmpty() )
-            throw new BAEServerException ("No server certificate to validate BAE Server Partner.") 
-        //char[] pw = "".toCharArray();
-        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-        ks.load(null); // Creates an empty keystore
-
-        // Add all certificates in the server trust chain
-        for ( cert in serverInfo.getCertificates() )
-           ks.setCertificateEntry(cert.toString(), cert);
-
-        logger.debug("HTTP Trust Store: " + ks);
+        for ( cert in serverInfo.getCertificates() ) {
+           logger.debug ("Adding Cert (" + cert.getSubjectX500Principal().getName() + ") to keystore.");
+           ks.setCertificateEntry(cert.getSubjectX500Principal().getName(), cert);
+        }
 
         return ks;
     }//end buildTrustStore()
-
 
 }/* end BAEServerImpl */
