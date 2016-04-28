@@ -144,6 +144,10 @@
             <id>gtri-public</id>
             <url>https://maven.gtri.gatech.edu/repos/public</url>
         </repository>
+        <repository>
+            <id>shib-release</id>
+            <url>https://build.shibboleth.net/nexus/content/groups/public</url>
+        </repository>
     </repositories>
 
 

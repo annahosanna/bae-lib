@@ -3,6 +3,8 @@ package org.gtri.gfipm.bae.util
 import gtri.logging.Logger
 import gtri.logging.LoggerFactory
 import net.shibboleth.utilities.java.support.xml.SerializeSupport
+import net.shibboleth.utilities.java.support.xml.ParserPool;
+import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import org.apache.http.HttpEntity
 import org.apache.http.client.HttpClient
 import org.apache.http.entity.ByteArrayEntity
@@ -54,10 +56,11 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
     //==================================================================================================================
     //  Constructors
     //==================================================================================================================
-    public WSS4jHttpSOAPClient(HttpClient httpClient, PrivateKey clientPrivateKey, X509Certificate clientCertificate){
+    public WSS4jHttpSOAPClient(HttpClient httpClient, ParserPool pPool, PrivateKey clientPrivateKey, X509Certificate clientCertificate){
         this.clientPrivateKey = clientPrivateKey;
         this.clientCertificate = clientCertificate;
         super.setHttpClient(httpClient);
+        super.setParserPool(pPool);
         // TODO Set parser pool?
     }
 

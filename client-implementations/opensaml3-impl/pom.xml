@@ -10,6 +10,8 @@
         Implements the BAE client api for java applications using the Open SAML 3.x libraries and Apache WS Security.
     </description>
 
+
+
     <parent>
         <groupId>org.gtri.gfipm.bae</groupId>
         <artifactId>bae-client-implementations-parent</artifactId>
@@ -33,6 +35,12 @@
             <groupId>org.apache.wss4j</groupId>
             <artifactId>wss4j-ws-security-dom</artifactId>
             <version>${wss4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.shibboleth.utilities</groupId>
+            <artifactId>java-support</artifactId>
+            <version>7.2.0</version>
         </dependency>
         
         <dependency>

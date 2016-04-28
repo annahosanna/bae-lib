@@ -23,6 +23,10 @@ import org.opensaml.soap.messaging.context.SOAP11Context
 import org.opensaml.soap.soap11.Envelope
 import org.opensaml.xmlsec.signature.Signature
 import java.security.KeyStore
+import net.shibboleth.utilities.java.support.xml.SerializeSupport
+import net.shibboleth.utilities.java.support.xml.ParserPool;
+import net.shibboleth.utilities.java.support.xml.BasicParserPool;
+
 
 import javax.net.ssl.SSLContext
 import java.util.concurrent.TimeUnit
@@ -38,12 +42,19 @@ class BAEServerImpl implements BAEServer {
     BAEClientInfo clientInfo
     BAEServerInfo serverInfo
     WebServiceRequestOptions webServiceRequestOptions
+
     //==================================================================================================================
     //  Public Interface Implementation Methods
     //==================================================================================================================
     @Override
     Collection<BackendAttribute> attributeQuery(SubjectIdentifier subjectId) throws BAEServerException {
         String txId = UUID.randomUUID().toString().toUpperCase();
+
+        logger.info("[${txId}] Seting up parser pool...")
+        BasicParserPool parserPool = new BasicParserPool();
+        parserPool.setMaxPoolSize(10);
+        parserPool.setNamespaceAware(true);
+        parserPool.initialize();
 
         logger.info("[${txId}] Request to do attributeQuery on @|cyan ${subjectId}|@...")
         validateConfiguration();
@@ -67,8 +78,8 @@ class BAEServerImpl implements BAEServer {
         HttpClient httpClient = getHttpClient(txId);
 
         logger.debug("[${txId}] Sending Attribute Query to EndpointAddress[@|cyan ${this.serverInfo?.getEndpointAddress()}|@]...");
-        SOAPClient soapClient = new WSS4jHttpSOAPClient(httpClient, this.clientInfo.getPrivateKey(), this.clientInfo.getCertificate());
-        soapClient.send(this.serverInfo?.endpointAddress, inOutOperationContext);
+        SOAPClient soapClient = new WSS4jHttpSOAPClient(httpClient, parserPool, this.clientInfo.getPrivateKey(), this.clientInfo.getCertificate());
+        soapClient.send(serverInfo.getEndpointAddress(), inOutOperationContext);
 
         logger.debug("Validating the response...");
         // TODO analyze the response
