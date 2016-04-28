@@ -22,19 +22,31 @@ import org.gtri.gfipm.bae.util.SoapEnvelopeBuilder
 import org.gtri.gfipm.bae.util.WSS4jHttpSOAPClient
 import org.opensaml.messaging.context.InOutOperationContext
 import org.opensaml.messaging.context.MessageContext
+import org.opensaml.core.xml.XMLObject
+import org.opensaml.core.xml.io.Marshaller
+import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport
 import org.opensaml.saml.saml2.core.AttributeQuery
 import org.opensaml.saml.saml2.core.Response
+import org.opensaml.saml.saml2.core.Assertion
+import org.opensaml.saml.saml2.core.Attribute
+import org.opensaml.saml.saml2.core.AttributeStatement
 import org.opensaml.soap.client.SOAPClient
 import org.opensaml.soap.client.SOAPClientContext
 import org.opensaml.soap.messaging.context.SOAP11Context
 import org.opensaml.soap.soap11.Envelope
 import org.opensaml.xmlsec.signature.Signature
 import org.opensaml.soap.client.http.HttpSOAPRequestParameters
+import org.opensaml.saml.saml2.encryption.Decrypter
+import org.opensaml.xmlsec.keyinfo.impl.StaticKeyInfoCredentialResolver
+import org.opensaml.xmlsec.encryption.support.InlineEncryptedKeyResolver
+import org.opensaml.security.credential.Credential
+import org.opensaml.security.credential.CredentialSupport
+import org.opensaml.xmlsec.encryption.support.DecryptionException
 import java.security.KeyStore
 import net.shibboleth.utilities.java.support.xml.SerializeSupport
 import net.shibboleth.utilities.java.support.xml.ParserPool;
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
-
+import org.w3c.dom.Element
 
 import javax.net.ssl.SSLContext
 import java.util.concurrent.TimeUnit
@@ -89,7 +101,7 @@ class BAEServerImpl implements BAEServer {
         HttpClient httpClient = getHttpClient(txId);
 
         logger.debug("[${txId}] Sending Attribute Query to EndpointAddress[@|cyan ${this.serverInfo?.getEndpointAddress()}|@]...");
-        SOAPClient soapClient = new WSS4jHttpSOAPClient(httpClient, parserPool, this.clientInfo.getPrivateKey(), this.clientInfo.getCertificate());
+        SOAPClient soapClient = new WSS4jHttpSOAPClient(httpClient, parserPool, clientInfo.getPrivateKey(), clientInfo.getCertificate());
         soapClient.send(serverInfo.getEndpointAddress(), inOutOperationContext);
 
         logger.debug("Validating the response...");
@@ -100,13 +112,75 @@ class BAEServerImpl implements BAEServer {
         logger.info("Received response.  Status Code: "+samlResponse.getStatus().getStatusCode().getValue());
 
         logger.debug("Decrypting attributes...")
+        Credential myCredential = CredentialSupport.getSimpleCredential (clientInfo.getCertificate(), clientInfo.getPrivateKey());
+        Decrypter samlDecrypter = new Decrypter(null, new StaticKeyInfoCredentialResolver(myCredential), new InlineEncryptedKeyResolver());
 
-        throw new UnsupportedOperationException("NOT YET IMPLEMENTED");
+        Assertion assertion = null;
+        samlResponse.getEncryptedAssertions().each { encryptedAssertion ->
+            if( assertion == null ){
+                logger.debug("Decrypting assertion...")
+                try {
+                    assertion = samlDecrypter.decrypt(encryptedAssertion);
+                    logger.info("Decrypted Assertion: \n${SerializeSupport.prettyPrintXML(assertion.getDOM())}")
+                } catch (DecryptionException e) {
+                    logger.error("Error decrypting saml!", e);
+                    throw new BAEServerException("Error decrypting attributes.", e);
+                }
+            }
+        }
+        if( assertion == null ){
+            logger.warn("Could not find any decrypted assertion!")
+            throw new BAEServerException("Could not find any decrypted assertion in response from BAE server.");
+        }
+
+        List<BackendAttribute> backendAttributes = []
+        logger.debug("Parsing attributes...")
+        assertion.getAttributeStatements().each { AttributeStatement attrStmt ->
+            attrStmt.getAttributes().each{ Attribute attribute ->
+                BackendAttribute beAttr = convertAttribute( attribute );
+                backendAttributes.add( beAttr )
+                if( beAttr.values.size() == 1 )
+                    logger.debug("  [@|cyan ${beAttr.name}|@] => [@|green ${beAttr.value}|@]")
+                else{
+                    StringBuffer buffer = new StringBuffer()
+                    buffer.append("  [@|cyan ${beAttr.name}|@] => \n")
+                    beAttr.values.each{ value ->
+                        buffer.append("                   [@|green ${value}|@]\n")
+                    }
+                    logger.debug(buffer.toString())
+                }
+            }
+        }
+
+        logger.info("Query[@|green ${subjectId}|@] resulted in @|cyan ${backendAttributes.size()}|@ backend attributes.");
+        return backendAttributes
+
     }//end attributeQuery()
 
     //==================================================================================================================
     //  Helper Methods
     //==================================================================================================================
+    private BackendAttribute convertAttribute(Attribute attribute){
+        BackendAttributeImpl beAttr = new BackendAttributeImpl()
+
+        beAttr.name = attribute.getName()
+        beAttr.friendlyName = attribute.friendlyName
+        beAttr.nameFormat = AttributeNameFormat.fromUri(attribute.nameFormat)
+        beAttr.values = convertToAttributeValues(attribute);
+
+        return beAttr
+    }//end convertAttribute()
+
+    private List<BackendAttributeValue> convertToAttributeValues( XMLObject xmlObj ){
+        Marshaller marshaller = XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(xmlObj);
+        if( marshaller == null )
+            throw new NullPointerException("Could not marshal SAML XMLObject.  No marshaller found for "+xmlObj);
+        Element element = marshaller.marshall(xmlObj);
+        String xml = SerializeSupport.prettyPrintXML(element);
+        return BackendAttributeParser.parseValues(xml);
+    }//end convertToString()
+
+
     /**
      * This method is called to check the configuration before performing any work.  If the configuration is found to
 SLContextBuilder

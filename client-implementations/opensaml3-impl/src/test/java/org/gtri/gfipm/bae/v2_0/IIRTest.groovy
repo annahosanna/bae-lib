@@ -33,11 +33,11 @@ public class IIRTest extends AbstractTest {
     static String SERVER_PUBLIC_CERTIFICATE_FILE_NAME = "iir-2015.crt";
     static String SERVER_PUBLIC_CERTIFICATE_FILE_NAME2 = "iir-2014.crt";
 
-//    static String CLIENT_CERTIFICATE_FILE_NAME = "gtri-pilot-iir.crt";
-//    static String CLIENT_PRIVATE_KEY_FILE_NAME = "gtri-pilot-iir.key";
+    static String CLIENT_CERTIFICATE_FILE_NAME = "gtri-pilot-iir.crt";
+    static String CLIENT_PRIVATE_KEY_FILE_NAME = "gtri-pilot-iir.key";
     static String CLIENT_PRIVATE_KEY_PASSWORD = "";
-    static String CLIENT_CERTIFICATE_FILE_NAME = "gtri-piv-2015.crt";
-    static String CLIENT_PRIVATE_KEY_FILE_NAME = "gtri-piv-2015.key";
+//    static String CLIENT_CERTIFICATE_FILE_NAME = "gtri-piv-2015.crt";
+//    static String CLIENT_PRIVATE_KEY_FILE_NAME = "gtri-piv-2015.key";
 
 
     static String ISSUER_ID = "URN:TEST:IDMANAGEMENT.GOV:ICAM:BAE:V2:gtri-pilot-iir";
