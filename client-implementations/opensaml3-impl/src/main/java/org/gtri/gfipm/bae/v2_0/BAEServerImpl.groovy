@@ -24,9 +24,11 @@ import org.opensaml.messaging.context.InOutOperationContext
 import org.opensaml.messaging.context.MessageContext
 import org.opensaml.saml.saml2.core.AttributeQuery
 import org.opensaml.soap.client.SOAPClient
+import org.opensaml.soap.client.SOAPClientContext
 import org.opensaml.soap.messaging.context.SOAP11Context
 import org.opensaml.soap.soap11.Envelope
 import org.opensaml.xmlsec.signature.Signature
+import org.opensaml.soap.client.http.HttpSOAPRequestParameters
 import java.security.KeyStore
 import net.shibboleth.utilities.java.support.xml.SerializeSupport
 import net.shibboleth.utilities.java.support.xml.ParserPool;
@@ -73,11 +75,18 @@ class BAEServerImpl implements BAEServer {
         logger.debug("[${txId}] Building SOAP message contexts...");
         MessageContext messageContext = new MessageContext();
         messageContext.setMessage(attributeQuery);
+        SOAPClientContext scc = new SOAPClientContext();
+        HttpSOAPRequestParameters soapAction = new HttpSOAPRequestParameters("AttributeQuery");
+        scc.setSOAPRequestParameters(soapAction);
+        messageContext.addSubcontext(scc);
         Envelope envelope = SoapEnvelopeBuilder.buildSoap11Envelope(messageContext);
         MessageContext inboundSoapContext = new MessageContext();
-        //What the hell is this line, adding a class definition to the context?  Seems like it should be something like new Soap11Context()...
-        //inboundSoapContext.addSubcontext(SOAP11Context.class, true);
+        inboundSoapContext.addSubcontext(new SOAP11Context(), true);
         InOutOperationContext inOutOperationContext = new InOutOperationContext(inboundSoapContext, messageContext);
+
+        // How many subcontexts does messageContext have?
+        // TODO - Write a sanity check to look for subContexts and make sure there is an SOAPClientContext and SOAP11Context...
+        
 
         // TODO When submitting MANY requests per second, we should strive to use a pool of HTTP Clients, instead of building new ones.
         HttpClient httpClient = getHttpClient(txId);
@@ -149,7 +158,7 @@ SLContextBuilder
         scb.loadTrustMaterial (ts, new TrustSelfSignedStrategy());
 
         if( shouldUseClientCertInTLS() ) {
-            logger.info ("Will attempt client certificate authentication.");
+            logger.info ("Will attempt client certificate authentication, adding private key to the TLS context.");
             scb.loadKeyMaterial   (ks, "".toCharArray());
         } else {
             logger.info ("Will not attempt client certificate authentication.");
@@ -157,9 +166,9 @@ SLContextBuilder
 
         SSLContext sslContext = scb.build();
         SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-        //httpClientBuilder.setSSLContext(sslContext)  // Redundant with following line?
+        httpClientBuilder.setSSLContext(sslContext)  // Redundant with following line?
         httpClientBuilder.setSSLSocketFactory(sslsf)
-        //httpClientBuilder.setSSLHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+        httpClientBuilder.setSSLHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
         Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("https", sslsf)
                 .register("http", new PlainConnectionSocketFactory())

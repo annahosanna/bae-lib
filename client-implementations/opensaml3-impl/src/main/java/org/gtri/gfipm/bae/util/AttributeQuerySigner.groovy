@@ -3,6 +3,7 @@ package org.gtri.gfipm.bae.util
 import gtri.logging.Logger
 import gtri.logging.LoggerFactory
 import net.shibboleth.utilities.java.support.xml.SerializeSupport
+import org.gtri.gfipm.bae.v2_0.WebServiceRequestOptions
 import org.gtri.gfipm.bae.v2_0.BAEClientInfo
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.core.config.ConfigurationService
@@ -74,7 +75,7 @@ class AttributeQuerySigner {
             throw new NullPointerException("Unable to obtain instance of '${XMLObjectBuilderFactory.class.name}' from the OpenSAML ConfigurationService.")
 
         Signature signature = xmlObjectBuilderFactory.getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
-        signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
+        signature.setCanonicalizationAlgorithm(WebServiceRequestOptions.WSS_CANONICALIZATION_ALGORITHM_DEFAULT);
         signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1);
         signature.setSigningCredential(credential);
 

@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class IIRTest extends AbstractTest {
 
-    static String SERVER_ENDPOINT = "https://extsvc.iir.com/28cfr-bae/baeservice.svc";
+    static String SERVER_ENDPOINT = "https://extsvc.iir.com/28CFR-BAE/BAEService.svc";
     static String DESTINATION_ID = "URN:TEST:IDMANAGEMENT.GOV:ICAM:BAE:V2:BJA28CFR";
 
 //    static String SERVER_PUBLIC_CERTIFICATE_FILE_NAME = "URN-TEST-IDMANAGEMENT.GOV-ICAM-BAE-V2-BJA28CFR.cer";

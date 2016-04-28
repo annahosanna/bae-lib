@@ -123,11 +123,11 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
             signature.setKeyIdentifierType(WSConstants.BST_DIRECT_REFERENCE);
             xml = signature.build(xml, crypto, secHeader);
 
-            logger.debug("[${txId}] Marshalling back out...");
+            logger.debug("[${txId}] Marshalling back out with charset (" + charset + ")...");
             byte[] xmlBytes = toBytes(xml, charset);
             logger.debug("[${txId}] Outbound SOAP message is [AFTER WSS4J]:\n %s", SerializeSupport.prettyPrintXML(xml.getDocumentElement()));
 
-            return new ByteArrayEntity(xmlBytes, ContentType.APPLICATION_XML);
+            return new ByteArrayEntity(xmlBytes, ContentType.create("text/xml", "utf-8"));
         } catch (MarshallingException e) {
             throw new SOAPClientException("[${txId}] Unable to marshall SOAP envelope", e);
         }
