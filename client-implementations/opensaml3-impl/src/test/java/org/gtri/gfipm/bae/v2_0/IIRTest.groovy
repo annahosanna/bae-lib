@@ -88,7 +88,7 @@ public class IIRTest extends AbstractTest {
         assertThat(attribute.getName(), equalTo("gfipm:2.0:user:28CFRCertificationIndicator"))
         assertThat(attribute.getValue().getBooleanValue(), equalTo(Boolean.FALSE))
 
-        logger.info("Successfully tested IIR round-trip case")
+        //logger.info("Successfully tested IIR round-trip case")
 
     }//end testIIR()
 }

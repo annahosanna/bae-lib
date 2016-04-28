@@ -20,9 +20,9 @@ import static org.hamcrest.Matchers.notNullValue
 /**
  * Created by brad on 7/16/15.
  */
-class BAEServerImplTest extends AbstractTest {
+class BAETest extends AbstractTest {
 
-    static Logger logger = LoggerFactory.get(BAEServerImplTest.class);
+    static Logger logger = LoggerFactory.get(BAETest.class);
 
     static String SERVER_ENDPOINT = "https://icam-gw.jhuapl.edu/BAE";
     static String DESTINATION_ID = "urn:dhs.gov:icam:bae:v1.0:test";

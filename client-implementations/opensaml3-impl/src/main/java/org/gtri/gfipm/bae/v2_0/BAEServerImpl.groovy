@@ -23,6 +23,7 @@ import org.gtri.gfipm.bae.util.WSS4jHttpSOAPClient
 import org.opensaml.messaging.context.InOutOperationContext
 import org.opensaml.messaging.context.MessageContext
 import org.opensaml.saml.saml2.core.AttributeQuery
+import org.opensaml.saml.saml2.core.Response
 import org.opensaml.soap.client.SOAPClient
 import org.opensaml.soap.client.SOAPClientContext
 import org.opensaml.soap.messaging.context.SOAP11Context
@@ -84,10 +85,6 @@ class BAEServerImpl implements BAEServer {
         inboundSoapContext.addSubcontext(new SOAP11Context(), true);
         InOutOperationContext inOutOperationContext = new InOutOperationContext(inboundSoapContext, messageContext);
 
-        // How many subcontexts does messageContext have?
-        // TODO - Write a sanity check to look for subContexts and make sure there is an SOAPClientContext and SOAP11Context...
-        
-
         // TODO When submitting MANY requests per second, we should strive to use a pool of HTTP Clients, instead of building new ones.
         HttpClient httpClient = getHttpClient(txId);
 
@@ -97,6 +94,12 @@ class BAEServerImpl implements BAEServer {
 
         logger.debug("Validating the response...");
         // TODO analyze the response
+        MessageContext serverResponse = (MessageContext) inOutOperationContext.getInboundMessageContext();
+        SOAP11Context  soapResponse   = (SOAP11Context)  serverResponse.getSubcontext(SOAP11Context);
+        Response samlResponse = getResponse(soapResponse.getEnvelope())
+        logger.info("Received response.  Status Code: "+samlResponse.getStatus().getStatusCode().getValue());
+
+        logger.debug("Decrypting attributes...")
 
         throw new UnsupportedOperationException("NOT YET IMPLEMENTED");
     }//end attributeQuery()
@@ -217,5 +220,15 @@ SLContextBuilder
 
         return ks;
     }//end buildTrustStore()
+
+    private Response getResponse( Envelope soapResponse ){
+        Response response = null;
+        soapResponse.getBody().getUnknownXMLObjects().each{ xmlObject ->
+            if( xmlObject instanceof Response )
+                response = (Response) xmlObject;
+        }
+        return response
+    }
+
 
 }/* end BAEServerImpl */
