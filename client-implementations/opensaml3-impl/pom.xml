@@ -10,14 +10,16 @@
         Implements the BAE client api for java applications using the Open SAML 3.x libraries and Apache WS Security.
     </description>
 
+
+
     <parent>
         <groupId>org.gtri.gfipm.bae</groupId>
         <artifactId>bae-client-implementations-parent</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.2-SNAPSHOT</version>
     </parent>
 
     <properties>
-        <opensaml.version>3.1.1</opensaml.version>
+        <opensaml.version>3.2.0</opensaml.version>
         <wss4j.version>2.1.2</wss4j.version>
     </properties>
 
@@ -36,14 +38,25 @@
         </dependency>
 
         <dependency>
+            <groupId>net.shibboleth.utilities</groupId>
+            <artifactId>java-support</artifactId>
+            <version>7.2.0</version>
+        </dependency>
+        
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5</version>
+            <version>4.3.6</version>
         </dependency>
 
         <dependency>
             <groupId>org.opensaml</groupId>
             <artifactId>opensaml-core</artifactId>
+            <version>${opensaml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opensaml</groupId>
+            <artifactId>opensaml-xmlsec-impl</artifactId>
             <version>${opensaml.version}</version>
         </dependency>
         <dependency>

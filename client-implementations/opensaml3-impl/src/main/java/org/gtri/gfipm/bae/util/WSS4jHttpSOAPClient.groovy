@@ -3,6 +3,8 @@ package org.gtri.gfipm.bae.util
 import gtri.logging.Logger
 import gtri.logging.LoggerFactory
 import net.shibboleth.utilities.java.support.xml.SerializeSupport
+import net.shibboleth.utilities.java.support.xml.ParserPool;
+import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import org.apache.http.HttpEntity
 import org.apache.http.client.HttpClient
 import org.apache.http.entity.ByteArrayEntity
@@ -54,10 +56,11 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
     //==================================================================================================================
     //  Constructors
     //==================================================================================================================
-    public WSS4jHttpSOAPClient(HttpClient httpClient, PrivateKey clientPrivateKey, X509Certificate clientCertificate){
+    public WSS4jHttpSOAPClient(HttpClient httpClient, ParserPool pPool, PrivateKey clientPrivateKey, X509Certificate clientCertificate){
         this.clientPrivateKey = clientPrivateKey;
         this.clientCertificate = clientCertificate;
         super.setHttpClient(httpClient);
+        super.setParserPool(pPool);
         // TODO Set parser pool?
     }
 
@@ -73,11 +76,14 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
     @Override
     protected HttpEntity createRequestEntity(@Nonnull Envelope message, @Nullable Charset charset) throws SOAPClientException {
         String txId = null;
-        XMLObject messageBody = message.getUnknownXMLObjects().get(0);
-        if( messageBody instanceof AttributeQuery ){
-            txId = ((AttributeQuery) messageBody).getID();
-        }else{
-            txId = "create-entity-${UUID.randomUUID().toString().replace("-", "")}";
+        // No idea what this is trying to accomplish, but it's doing a get(0) on an empty list, so protect against that. jk
+        if ( ! message.getUnknownXMLObjects().isEmpty () ) {
+          XMLObject messageBody = message.getUnknownXMLObjects().get(0);
+          if( messageBody instanceof AttributeQuery ){
+             txId = ((AttributeQuery) messageBody).getID();
+          }else{
+             txId = "create-entity-${UUID.randomUUID().toString().replace("-", "")}";
+          }
         }
 
         try {
@@ -89,8 +95,8 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
 
             logger.debug("[${txId}] Inserting WSS4J security headers...");
             Document xml = soapEnvelopeElement.getOwnerDocument();
-            WSSecHeader secHeader = new WSSecHeader();
-            secHeader.insertSecurityHeader(xml);
+            WSSecHeader secHeader = new WSSecHeader(xml);
+            secHeader.insertSecurityHeader();
 
             logger.debug("[${txId}] Inserting timestamp...")
             WSSecTimestamp timestamp = new WSSecTimestamp();
@@ -104,9 +110,11 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
 
             logger.debug("[${txId}] Building Crypto Implementation...")
             Crypto crypto = this.buildCrypto();
+            logger.debug("[${txId}] Resutling Crypto: " + crypto)
 
             logger.debug("[${txId}] Inserting signature...")
             WSSecSignature signature = new WSSecSignature();
+            signature.setUserInfo("myKey", "");
             signature.prepare(xml, crypto, secHeader);
             signature.getParts().add(timestampEncPart);
             signature.getParts().add(bodyPart);
@@ -115,11 +123,11 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
             signature.setKeyIdentifierType(WSConstants.BST_DIRECT_REFERENCE);
             xml = signature.build(xml, crypto, secHeader);
 
-            logger.debug("[${txId}] Marshalling back out...");
+            logger.debug("[${txId}] Marshalling back out with charset (" + charset + ")...");
             byte[] xmlBytes = toBytes(xml, charset);
             logger.debug("[${txId}] Outbound SOAP message is [AFTER WSS4J]:\n %s", SerializeSupport.prettyPrintXML(xml.getDocumentElement()));
 
-            return new ByteArrayEntity(xmlBytes, ContentType.APPLICATION_XML);
+            return new ByteArrayEntity(xmlBytes, ContentType.create("text/xml", "utf-8"));
         } catch (MarshallingException e) {
             throw new SOAPClientException("[${txId}] Unable to marshall SOAP envelope", e);
         }
@@ -137,12 +145,19 @@ class WSS4jHttpSOAPClient extends HttpSOAPClient {
         if( this.clientCertificate == null )
             throw new NullPointerException("Cannot build required WSS4j Crypto, since 'ClientCertificate' is null.")
         Merlin merlin = new Merlin();
+        char[] pw = "".toCharArray();
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        KeyStore.ProtectionParameter protParam = new KeyStore.PasswordProtection("");
-        javax.crypto.SecretKey mySecretKey = this.clientPrivateKey;
-        KeyStore.SecretKeyEntry skEntry = new KeyStore.SecretKeyEntry(mySecretKey);
-        keyStore.setEntry("", skEntry, protParam);
-        keyStore.setCertificateEntry("", this.clientCertificate);
+        keyStore.load(null); // Creates an empty keystore
+        KeyStore.ProtectionParameter protParam = new KeyStore.PasswordProtection(pw);
+        //javax.crypto.SecretKey mySecretKey = this.clientPrivateKey;
+        //List<X509Certificate> clientCerts = [];
+        //clientCerts.add (this.clientCertificate);
+        //logger.debug ("Private Key: " + clientPrivateKey.toString());
+        //logger.debug ("Private Key: " + clientCertificate.toString());
+        KeyStore.PrivateKeyEntry pkEntry = new KeyStore.PrivateKeyEntry(clientPrivateKey, clientCertificate);
+        //logger.debug ("KeyStore: " + pkEntry);
+        keyStore.setEntry("myKey", pkEntry, protParam);
+        keyStore.setCertificateEntry("myCert", this.clientCertificate);
         merlin.setKeyStore(keyStore);
         return merlin;
     }//end buildCrypto()

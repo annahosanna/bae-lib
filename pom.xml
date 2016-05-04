@@ -5,7 +5,7 @@
 
     <groupId>org.gtri.gfipm.bae</groupId>
     <artifactId>bae-parent</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Backend Attribute Exchange Parent Project</name>
@@ -139,12 +139,24 @@
         </plugins>
     </build>
 
+   <repositories>
+        <repository>
+            <id>gtri-public</id>
+            <url>https://maven.gtri.gatech.edu/repos/public</url>
+        </repository>
+        <repository>
+            <id>shib-release</id>
+            <url>https://build.shibboleth.net/nexus/content/groups/public</url>
+        </repository>
+    </repositories>
 
+
+<!--
     <repositories>
         <repository>
             <id>gtri-external</id>
             <url>https://maven.gtri.gatech.edu/repos/external</url>
         </repository>
     </repositories>
-
+-->
 </project>

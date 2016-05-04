@@ -3,7 +3,9 @@ package org.gtri.gfipm.bae.util
 import gtri.logging.Logger
 import gtri.logging.LoggerFactory
 import net.shibboleth.utilities.java.support.xml.SerializeSupport
+import org.gtri.gfipm.bae.v2_0.WebServiceRequestOptions
 import org.gtri.gfipm.bae.v2_0.BAEClientInfo
+import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.core.config.ConfigurationService
 import org.opensaml.core.xml.XMLObjectBuilderFactory
 import org.opensaml.core.xml.config.XMLObjectProviderRegistry
@@ -15,6 +17,9 @@ import org.opensaml.xmlsec.signature.Signature
 import org.opensaml.xmlsec.signature.support.DocumentInternalIDContentReference
 import org.opensaml.xmlsec.signature.support.SignatureConstants
 import org.opensaml.xmlsec.signature.support.Signer
+import org.opensaml.xmlsec.signature.KeyInfo;
+import org.opensaml.xmlsec.keyinfo.KeyInfoSupport;
+
 import org.w3c.dom.Element
 
 import java.security.KeyPair
@@ -29,7 +34,7 @@ import java.security.cert.X509Certificate
 class AttributeQuerySigner {
 
     static Logger logger = LoggerFactory.get(AttributeQuerySigner.class)
-
+/*
     public static Signature sign(AttributeQuery query, KeyPair keyPair){
         Credential credential = CredentialSupport.getSimpleCredential(keyPair.getPublic(), keyPair.getPrivate());
         return sign(query, credential);
@@ -39,12 +44,13 @@ class AttributeQuerySigner {
         Credential credential = CredentialSupport.getSimpleCredential(publicKey, privateKey);
         return sign(query, credential);
     }
+*/
 
     public static Signature sign(AttributeQuery query, BAEClientInfo clientInfo){
         if( clientInfo == null )
             throw new NullPointerException("BAEClientInfo is null, and must have a value in order to sign the AttributeQuery.")
         Credential credential = CredentialSupport.getSimpleCredential(clientInfo.getCertificate(), clientInfo.getPrivateKey());
-        return sign(query, credential);
+        return sign(query, credential, clientInfo.getCertificate());
     }//end sign()
 
     /**
@@ -53,7 +59,8 @@ class AttributeQuerySigner {
      * <br/><br/>
      * @param query
      */
-    public static Signature sign(AttributeQuery query, Credential credential){
+    public static Signature sign(AttributeQuery query, Credential credential, X509Certificate myCert){
+
         if( query == null )
             throw new UnsupportedOperationException("AttributeQuery is required to have a non-null value in order to compute a signature")
         if( credential == null )
@@ -68,9 +75,14 @@ class AttributeQuerySigner {
             throw new NullPointerException("Unable to obtain instance of '${XMLObjectBuilderFactory.class.name}' from the OpenSAML ConfigurationService.")
 
         Signature signature = xmlObjectBuilderFactory.getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
-        signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
+        signature.setCanonicalizationAlgorithm(WebServiceRequestOptions.WSS_CANONICALIZATION_ALGORITHM_DEFAULT);
         signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1);
         signature.setSigningCredential(credential);
+
+        // Add KeyInfo to signature
+        KeyInfo ki = (KeyInfo) XMLObjectSupport.buildXMLObject(KeyInfo.DEFAULT_ELEMENT_NAME);
+        KeyInfoSupport.addCertificate (ki, myCert);
+        signature.setKeyInfo(ki);
 
         DocumentInternalIDContentReference contentReference = new DocumentInternalIDContentReference(query.getID());
         contentReference.getTransforms().add(SignatureConstants.TRANSFORM_ENVELOPED_SIGNATURE);

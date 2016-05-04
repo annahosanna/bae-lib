@@ -14,12 +14,14 @@
     <parent>
         <groupId>org.gtri.gfipm.bae</groupId>
         <artifactId>bae-parent</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.2-SNAPSHOT</version>
     </parent>
 
     <build>
         <plugins>
             <!-- Forces javadoc compilation during package phase. -->
+
+<!--
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration />
@@ -32,7 +34,7 @@
                     </execution>
                 </executions>
             </plugin>
-
+-->
  
             <!-- Creates javadoc assembly for deployment  
             <plugin>

@@ -1,8 +1,8 @@
-package org.gtri.gfip.bae.util
+package org.gtri.gfipm.bae.util
 
 import gtri.logging.Logger
 import gtri.logging.LoggerFactory
-import org.gtri.gfip.bae.AbstractTest
+import org.gtri.gfipm.bae.AbstractTest
 import org.gtri.gfipm.bae.util.AttributeQueryBuilder
 import org.gtri.gfipm.bae.v2_0.EmailSubjectIdentifier
 import org.gtri.gfipm.bae.v2_0.FASCNSubjectIdentifier
