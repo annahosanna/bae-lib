@@ -7,9 +7,10 @@ import org.apache.http.conn.HttpClientConnectionManager
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
+//import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.impl.client.HttpClients
-import org.apache.http.ssl.SSLContexts
-import org.apache.http.ssl.SSLContextBuilder
+import org.apache.http.conn.ssl.SSLContexts
+import org.apache.http.conn.ssl.SSLContextBuilder
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory
 import org.apache.http.conn.socket.ConnectionSocketFactory
@@ -218,12 +219,10 @@ SLContextBuilder
     private CloseableHttpClient getHttpClient(String txId) {
         logger.debug("[$txId] Building an HTTP Client...");
         HttpClientBuilder httpClientBuilder = HttpClientBuilder.create()
-        if ( webServiceRequestOptions )
-           httpClientBuilder.setConnectionTimeToLive(this.webServiceRequestOptions.getNumber(WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT, WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT_DEFAULT), TimeUnit.SECONDS)
-        else
-           httpClientBuilder.setConnectionTimeToLive(WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT_DEFAULT, TimeUnit.SECONDS)
-
-        // TODO Figure out how to configure a custom SSL session to validate only against the server info given.
+//        if ( webServiceRequestOptions )
+//           httpClientBuilder.setConnectionTimeToLive(this.webServiceRequestOptions.getNumber(WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT, WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT_DEFAULT), TimeUnit.SECONDS)
+//        else
+//           httpClientBuilder.setConnectionTimeToLive(WebServiceRequestOptions.HTTP_CLIENT_TIMEOUT_DEFAULT, TimeUnit.SECONDS)
 
 
         //SSLContext sslContext = SSLContexts.createSystemDefault();
@@ -231,7 +230,7 @@ SLContextBuilder
         KeyStore ks = buildKeyStore();
         KeyStore ts = buildTrustStore();
         SSLContextBuilder scb = new SSLContextBuilder();
-        scb.create();
+        //scb.create();
         scb.loadTrustMaterial (ts, new TrustSelfSignedStrategy());
 
         if( shouldUseClientCertInTLS() ) {
@@ -243,9 +242,10 @@ SLContextBuilder
 
         SSLContext sslContext = scb.build();
         SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-        httpClientBuilder.setSSLContext(sslContext)  // Redundant with following line?
+        httpClientBuilder.setSslcontext(sslContext)  // Redundant with following line?
         httpClientBuilder.setSSLSocketFactory(sslsf)
-        httpClientBuilder.setSSLHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+        //Only available in 4.5, setting it via the ConnectionSocketFactory above should work for 4.3
+        //httpClientBuilder.setSSLHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
         Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("https", sslsf)
                 .register("http", new PlainConnectionSocketFactory())
